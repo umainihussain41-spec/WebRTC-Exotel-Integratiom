@@ -21,6 +21,7 @@ with ringer, call timer, activity log. **Every call is recorded.**
 | `public/vendor/exotel-websdk.bundle.js` | Pre-built Exotel WebSDK. |
 | `public/login.html` | Password gate used when deployed. |
 | `railway.json` | Railway build/start/health config. |
+| `railway-env.js` | Prints the variable block to paste into Railway. |
 
 ## Endpoints (no Exotel API removed)
 
@@ -70,33 +71,38 @@ logs — fine locally, not fine deployed.
 
 ### Steps
 
-```bash
-# 1. Make it a repo (.env is already gitignored — keep it that way)
-git init && git add -A && git commit -m "Exotel softphone"
-git remote add origin <your-github-repo>
-git push -u origin main
+The repo is already on GitHub (private):
+**https://github.com/umainihussain41-spec/exotel-browser-softphone**
 
-# 2. Generate a session secret to paste into Railway
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+1. On [railway.app](https://railway.app) → **New Project → Deploy from GitHub
+   repo** → pick `exotel-browser-softphone`. (First time only: authorise Railway
+   for the repo, and because it's private, grant it access explicitly.)
+   `railway.json` supplies the start command and a `/healthz` check; Nixpacks
+   installs and runs `postinstall` to build the browser bundle.
 
-3. On [railway.app](https://railway.app): **New Project → Deploy from GitHub
-   repo**, pick this repo. `railway.json` sets the start command and a
-   `/healthz` check; Nixpacks handles the build.
-4. **Variables** → add every key below. Copy the Exotel values from your local
-   `.env` — printable with
-   `node -e "require('dotenv').config();['EXOTEL_ACCOUNT_SID','EXOTEL_SUBDOMAIN','EXOTEL_API_KEY','EXOTEL_API_TOKEN','EXOTEL_CALLER_ID','EXOTEL_REGION','EXOTEL_EXOTEL_DOMAIN','EXOTEL_ICORE_BASE','EXOTEL_CLIENT_ID','EXOTEL_CLIENT_SECRET','EXOTEL_APP_NAME','EXOTEL_APP_ID','EXOTEL_APP_SECRET','EXOTEL_WEBRTC_USER_ID','EXOTEL_AGENT_NAME','EXOTEL_AGENT_NUMBER'].forEach(k=>console.log(k+'='+(process.env[k]||'')))"`
+2. Get the variables to paste. Locally, run:
 
-   | Variable | Value |
-   |----------|-------|
-   | `EXOTEL_*` | the 16 keys from your `.env` |
-   | `APP_PASSWORD` | a password you choose — required |
-   | `SESSION_SECRET` | the random hex from step 2 |
+   ```bash
+   node railway-env.js
+   ```
 
-   Do **not** set `PORT` — Railway injects it and `server.js` already reads it.
-5. **Settings → Networking → Generate Domain.** Open the HTTPS URL on the Mac,
-   sign in with `APP_PASSWORD`, allow the microphone, and the browser line
-   registers exactly as it does locally.
+   That prints every `EXOTEL_*` value from your `.env`, plus a freshly generated
+   `SESSION_SECRET` and a placeholder `APP_PASSWORD`. Replace the placeholder
+   with a password you choose.
+
+3. In Railway → **Variables → Raw Editor**, paste the whole block and save.
+
+   - **`APP_PASSWORD` is required.** Without it the dialer is open to anyone
+     with the URL, and `/api/webrtc/token` hands out an Exotel app token.
+   - Do **not** set `PORT` — Railway injects it and `server.js` reads it.
+
+4. **Settings → Networking → Generate Domain.**
+
+5. Open the `https://…` URL on the Mac, sign in with `APP_PASSWORD`, click
+   **Enable microphone → Allow**. The signal bars go green and the browser line
+   is live.
+
+To redeploy later, just `git push` — Railway rebuilds on every push to `main`.
 
 Provisioning (`npm run provision`) stays a **local** task — it writes
 `EXOTEL_APP_ID`/`EXOTEL_APP_SECRET` back into `.env`, and a deployed container's

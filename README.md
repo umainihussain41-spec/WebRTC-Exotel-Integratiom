@@ -71,12 +71,12 @@ logs — fine locally, not fine deployed.
 
 ### Steps
 
-The repo is already on GitHub (private):
-**https://github.com/umainihussain41-spec/exotel-browser-softphone**
+The repo is on GitHub:
+**https://github.com/umainihussain41-spec/WebRTC-Exotel-Integratiom**
 
 1. On [railway.app](https://railway.app) → **New Project → Deploy from GitHub
-   repo** → pick `exotel-browser-softphone`. (First time only: authorise Railway
-   for the repo, and because it's private, grant it access explicitly.)
+   repo** → pick `WebRTC-Exotel-Integratiom`. (First time only: authorise the
+   Railway GitHub app for your account.)
    `railway.json` supplies the start command and a `/healthz` check; Nixpacks
    installs and runs `postinstall` to build the browser bundle.
 

@@ -1,0 +1,8 @@
+node_modules/
+.env
+npm-debug.log*
+
+# Vendor security report — describes an unpatched cross-tenant flaw in Exotel's
+# platform and names a third-party customer. Keep it out of the code host until
+# Exotel has responded. Delete this line to track it.
+BUG-REPORT-cross-tenant-binding.md

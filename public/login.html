@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>Sign in · Exotel Softphone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="stage">
+    <section class="softphone" style="max-width:340px">
+      <div class="sp-band">
+        <span class="sp-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </span>
+        <div class="sp-band-text">
+          <span class="sp-brand">EXOTEL</span>
+          <span class="sp-agent">Softphone</span>
+        </div>
+      </div>
+
+      <div class="sp-body">
+        <h2 style="margin:0 0 6px;font-size:1.02rem;font-weight:700">Sign in</h2>
+        <p style="margin:0 0 16px;font-size:.82rem;color:var(--text-soft)">
+          This dialer can place calls billed to the Exotel account, so it is
+          password protected.
+        </p>
+        <form id="loginForm">
+          <label class="field">
+            <span>Password</span>
+            <input id="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="gate-btn" id="submitBtn" type="submit">Sign in</button>
+        </form>
+        <p class="gate-foot" id="msg" style="color:var(--red)"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById("loginForm");
+      var msg = document.getElementById("msg");
+      var btn = document.getElementById("submitBtn");
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        msg.textContent = "";
+        btn.disabled = true;
+        try {
+          var r = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: document.getElementById("password").value }),
+          });
+          var data = await r.json();
+          if (data.ok) { window.location.href = "/"; return; }
+          msg.textContent = data.error || "Sign in failed.";
+        } catch (err) {
+          msg.textContent = "Could not reach the server.";
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

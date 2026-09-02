@@ -150,7 +150,13 @@ app.post("/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/healthz", (req, res) => res.json({ ok: true }));
+// Railway probes this on deploy, and the dialer pings it to hold the service
+// awake while a call is up. It must never be cached: a cached 200 would mean no
+// request actually reaches the container, and Railway would sleep mid-call.
+app.get("/healthz", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, sleeping: false });
+});
 
 app.use((req, res, next) => {
   if (!AUTH_PASSWORD) return next();                 // local dev: wide open

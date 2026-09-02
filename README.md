@@ -112,6 +112,47 @@ filesystem is thrown away on redeploy. Run it here, then copy the values up.
 > the Mac at the same time, both register the same SIP device and Exotel rings
 > whichever registered last. Use one at a time, or provision a second agent.
 
+### Sleeping when nobody is calling (Railway Serverless)
+
+This server does nothing on its own. There is no polling loop, no cron, no
+database connection and no background timer — every outbound request it makes
+sits inside a route handler. With nobody signed in it is completely silent,
+which is exactly what Railway needs in order to stop the container and stop
+billing for it.
+
+Turn it on **in the Railway dashboard** — there is no `railway.json` field for
+it:
+
+1. Project → your service → **Settings** → **Deploy** → **Serverless**
+2. Toggle **Enable Serverless**
+3. **Redeploy.** The toggle does not touch the container that is already
+   running; it only applies from the next deployment onward.
+
+Railway then stops the service after roughly 5–10 minutes with no outbound
+traffic, and starts it again on the next request. You are billed for the
+minutes it is actually up.
+
+**What that costs you:** the first request after a sleep pays a cold start of a
+few seconds, and Railway's own docs warn it can come back `502` outright. So the
+sign-in page and every backend call in the dialer retry on `502/503/504` with a
+short backoff (`wakeFetch()` in `public/login.html` and `public/app.js`). You
+see "Waking the server up…" for a moment instead of an error.
+
+**The subtle one — do not remove the keepalive.** Exotel carries call audio from
+the browser straight to Exotel; it never passes through this server. A
+25-minute call therefore looks *completely idle* from Railway's side, and the
+service would go to sleep in the middle of it — so the status callback and the
+call-details lookup at hang-up would land on a sleeping container. To prevent
+that, the dialer pings `/healthz` every 2 minutes for exactly as long as a call
+is on screen, and stops the moment it returns to idle (`keepAwake()`, driven
+from `showPhase()`). `/healthz` is sent `Cache-Control: no-store` so the ping
+cannot be served from cache and actually reaches the container.
+
+**What will silently break sleeping** if you add it later: an uptime monitor or
+cron pinging the URL, a persistent database connection, an analytics/telemetry
+SDK that phones home, or any `setInterval` that makes a network request. Any one
+of those counts as outbound traffic and the service simply never sleeps.
+
 ## What happens with the microphone permission
 
 Browsers only show the permission prompt in response to a click, and they only

@@ -100,6 +100,61 @@
     callerId: "",
   };
 
+  /* ================= serverless cold starts =================
+     Railway is set to sleep this service after a few idle minutes (service
+     Settings > Deploy > Serverless). Two consequences the UI has to absorb:
+
+       1. The first request to a sleeping service can come back 502/503/504,
+          or drop outright, while the container boots. The same request a
+          moment later succeeds, so backend calls go through wakeFetch().
+
+       2. Exotel carries call media browser-to-Exotel directly; this server
+          sees no traffic at all while a call is up. A long call therefore
+          looks idle and the service would sleep mid-call, so the requests we
+          make when it ends would fail. keepAwake() pings /healthz for as long
+          as a call is on screen, and stops the moment we are idle again. */
+
+  const WAKE_BACKOFF_MS = [400, 1200, 2500, 4000];
+
+  async function wakeFetch(url, opts) {
+    let lastErr = null;
+    for (let attempt = 0; attempt <= WAKE_BACKOFF_MS.length; attempt++) {
+      if (attempt) {
+        if (attempt === 1) log("Server is asleep — waking it up...", "warn");
+        setSignal("wait");
+        await new Promise((r) => setTimeout(r, WAKE_BACKOFF_MS[attempt - 1]));
+      }
+      try {
+        const r = await fetch(url, opts);
+        // A 502/503/504 here is the edge proxy, not the app: still booting.
+        if (r.status === 502 || r.status === 503 || r.status === 504) {
+          lastErr = new Error("cold start " + r.status);
+          continue;
+        }
+        return r;
+      } catch (err) {
+        lastErr = err;  // a sleeping service can also refuse the connection
+      }
+    }
+    throw lastErr || new Error("unreachable");
+  }
+
+  // Comfortably inside the ~5 min of silence Railway needs before it sleeps.
+  const KEEPALIVE_MS = 120000;
+  let keepAliveId = null;
+
+  function keepAwake(on) {
+    if (on === !!keepAliveId) return;
+    if (on) {
+      keepAliveId = setInterval(() => {
+        fetch("/healthz", { cache: "no-store" }).catch(() => {});
+      }, KEEPALIVE_MS);
+    } else {
+      clearInterval(keepAliveId);
+      keepAliveId = null;
+    }
+  }
+
   /* ======================================================================
      Ringer — synthesised so it needs no audio assets and cannot 404.
      Browsers block audio until the user has interacted with the page, so the
@@ -288,6 +343,9 @@
     // Keypad: shown while idle (to dial) and in-call (to send DTMF).
     el.dialpad.hidden = !(state.padOpen && phase !== "incoming");
     updateDialAvailability();
+
+    // Hold the server open for as long as anything is on the line.
+    keepAwake(busy);
   }
 
   function resetCallUI() {
@@ -509,7 +567,7 @@
     setSignal("wait");
     let tokenResp;
     try {
-      const r = await fetch("/api/webrtc/token", { method: "POST" });
+      const r = await wakeFetch("/api/webrtc/token", { method: "POST" });
       tokenResp = await r.json();
     } catch (err) {
       setSignal("err");
@@ -836,7 +894,7 @@
 
     let config = {};
     try {
-      config = await (await fetch("/api/config")).json();
+      config = await (await wakeFetch("/api/config")).json();
     } catch (e) {
       log("Could not load /api/config", "error");
     }
@@ -851,7 +909,7 @@
 
     let status = null;
     try {
-      status = await (await fetch("/api/provision/status")).json();
+      status = await (await wakeFetch("/api/provision/status")).json();
     } catch (e) {}
 
     if (status && status.user && status.user.provisioned === false) {

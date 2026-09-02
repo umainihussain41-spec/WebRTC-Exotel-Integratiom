@@ -52,12 +52,38 @@
       var form = document.getElementById("loginForm");
       var msg = document.getElementById("msg");
       var btn = document.getElementById("submitBtn");
+      // Sign-in is usually the first request to reach a sleeping service, so
+      // it absorbs the cold start: a 502/503/504 from the edge means the
+      // container is still booting, and the same POST works a moment later.
+      var WAKE_BACKOFF_MS = [400, 1200, 2500, 4000];
+
+      async function wakeFetch(url, opts) {
+        var lastErr = null;
+        for (var attempt = 0; attempt <= WAKE_BACKOFF_MS.length; attempt++) {
+          if (attempt) {
+            if (attempt === 1) msg.textContent = "Waking the server up...";
+            await new Promise(function (r) { setTimeout(r, WAKE_BACKOFF_MS[attempt - 1]); });
+          }
+          try {
+            var r = await fetch(url, opts);
+            if (r.status === 502 || r.status === 503 || r.status === 504) {
+              lastErr = new Error("cold start " + r.status);
+              continue;
+            }
+            return r;
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        throw lastErr || new Error("unreachable");
+      }
+
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
         msg.textContent = "";
         btn.disabled = true;
         try {
-          var r = await fetch("/login", {
+          var r = await wakeFetch("/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password: document.getElementById("password").value }),

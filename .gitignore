@@ -15,3 +15,6 @@ data/
 
 # The integration guide is a deliverable: keep it in the repo.
 !docs/
+
+# Sealed credential packages for customers. Never commit these.
+out/

@@ -37,6 +37,16 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// A malformed JSON body otherwise reaches Express's default handler, which
+// replies with an HTML stack trace containing local filesystem paths. Answer
+// in the same shape the rest of the API uses instead.
+app.use((err, req, res, next) => {
+  if (err && err.type === "entity.parse.failed") {
+    return res.status(400).json({ ok: false, error: "Malformed JSON body." });
+  }
+  next(err);
+});
+
 const cfg = {
   accountSid: process.env.EXOTEL_ACCOUNT_SID || "",
   subdomain: process.env.EXOTEL_SUBDOMAIN || "api.in.exotel.com",
@@ -70,7 +80,11 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const COOKIE = "exo_session";
 
 // Paths that must stay reachable without a session.
-const OPEN_PATHS = new Set(["/login", "/logout", "/login.html", "/styles.css", "/healthz"]);
+const OPEN_PATHS = new Set([
+  "/login", "/logout", "/login.html", "/styles.css", "/healthz",
+  // The credential portal is for customers who do not have the dialer password.
+  "/credentials.html", "/api/credentials/issue",
+]);
 
 const sign = (v) => crypto.createHmac("sha256", SESSION_SECRET).update(v).digest("hex");
 
@@ -156,6 +170,176 @@ app.post("/logout", (req, res) => {
 app.get("/healthz", (req, res) => {
   res.set("Cache-Control", "no-store");
   res.json({ ok: true, sleeping: false });
+});
+
+// ---- Credential portal ----------------------------------------------------
+// Lets a customer obtain their own Client ID and Client Secret without anyone
+// having to hand them the upstream call.
+//
+// Two things are deliberate here:
+//
+//  1. The upstream host and path come entirely from environment variables. They
+//     appear in no file in this repository and in no document we publish, so a
+//     reader of either learns nothing about how the credentials are minted.
+//  2. Access is gated by single-use codes that we issue out of band, and each
+//     account SID may be served exactly once. The upstream call needs no
+//     authentication of its own, so without a gate this route would let anyone
+//     mint credentials for any account whose SID and admin email they knew.
+//     Issuing once per SID also avoids creating duplicate customer records.
+
+const fs = require("fs");
+
+const CRED = {
+  base: process.env.CRED_UPSTREAM_BASE || "",
+  path: process.env.CRED_UPSTREAM_PATH || "",
+  get ready() { return Boolean(this.base && this.path); },
+  get url() {
+    return this.base.replace(/\/+$/, "") + "/" + this.path.replace(/^\/+/, "");
+  },
+};
+
+const STORE_PATH = process.env.CRED_STORE_PATH || path.join(__dirname, "data", "credential-issuance.json");
+
+function storeRead() {
+  try {
+    return JSON.parse(fs.readFileSync(STORE_PATH, "utf8"));
+  } catch (e) {
+    return { codes: {}, issued: {} };
+  }
+}
+
+function storeWrite(db) {
+  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+  fs.writeFileSync(STORE_PATH, JSON.stringify(db, null, 2));
+}
+
+const hashCode = (c) => crypto.createHash("sha256").update(String(c).trim().toUpperCase()).digest("hex");
+
+// The upstream response shape is not contractually fixed, so find the pair by
+// key name wherever it sits rather than assuming a nesting.
+function findCredentials(node, found = {}) {
+  if (!node || typeof node !== "object") return found;
+  for (const [k, v] of Object.entries(node)) {
+    if (typeof v === "string") {
+      const key = k.toLowerCase().replace(/[^a-z]/g, "");
+      if (!found.clientId && (key === "clientid" || key === "id")) found.clientId = v;
+      if (!found.clientSecret && (key === "clientsecret" || key === "secret")) found.clientSecret = v;
+    } else if (typeof v === "object") {
+      findCredentials(v, found);
+    }
+  }
+  return found;
+}
+
+const credFails = new Map();
+function credThrottled(ip) {
+  const rec = credFails.get(ip);
+  if (!rec || Date.now() > rec.until) { credFails.delete(ip); return 0; }
+  return Math.ceil((rec.until - Date.now()) / 1000);
+}
+function credFailure(ip) {
+  const rec = credFails.get(ip) || { count: 0, until: 0 };
+  rec.count += 1;
+  if (rec.count > 3) rec.until = Date.now() + Math.min(600000, 10000 * Math.pow(2, rec.count - 4));
+  credFails.set(ip, rec);
+}
+
+app.post("/api/credentials/issue", async (req, res) => {
+  if (!CRED.ready) {
+    return res.status(503).json({ ok: false, error: "The credential portal is not configured on this deployment." });
+  }
+  const wait = credThrottled(req.ip);
+  if (wait) {
+    return res.status(429).json({ ok: false, error: `Too many attempts. Try again in ${wait} seconds.` });
+  }
+
+  const code = String((req.body && req.body.code) || "").trim();
+  const accountSid = String((req.body && req.body.accountSid) || "").trim();
+  const email = String((req.body && req.body.email) || "").trim();
+
+  if (!code || !accountSid || !email) {
+    return res.status(400).json({ ok: false, error: "Access code, Account SID and administrator email are all required." });
+  }
+  if (!/^[A-Za-z0-9_-]{3,64}$/.test(accountSid)) {
+    return res.status(400).json({ ok: false, error: "That does not look like an Account SID." });
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ ok: false, error: "Enter the administrator email address on the Exotel account." });
+  }
+
+  const db = storeRead();
+  const h = hashCode(code);
+  const entry = db.codes[h];
+  const sidKey = accountSid.toLowerCase();
+
+  if (!entry) {
+    credFailure(req.ip);
+    return res.status(401).json({ ok: false, error: "That access code is not recognised." });
+  }
+  if (entry.usedAt) {
+    return res.status(409).json({
+      ok: false,
+      error: "This access code has already been used. Credentials are issued once. If you no longer have them, contact your Exotel representative.",
+    });
+  }
+  if (db.issued[sidKey]) {
+    return res.status(409).json({
+      ok: false,
+      error: "Credentials have already been issued for this Account SID. Contact your Exotel representative if you need them re-sent.",
+    });
+  }
+
+  // Reserve the code before the upstream call so a double submit cannot spend
+  // it twice; release it again if the upstream call did not succeed.
+  entry.usedAt = new Date().toISOString();
+  entry.accountSid = accountSid;
+  storeWrite(db);
+
+  const release = () => {
+    const cur = storeRead();
+    if (cur.codes[h]) { cur.codes[h].usedAt = null; cur.codes[h].accountSid = null; storeWrite(cur); }
+  };
+
+  try {
+    const r = await fetch(CRED.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ CustomerName: accountSid, Email: email }),
+    });
+    const text = await r.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) {}
+
+    if (!r.ok || (data && data.Status && data.Status !== "Success")) {
+      release();
+      const why = (data && (data.Error || data.message)) || `upstream returned HTTP ${r.status}`;
+      console.log(`[credentials] refused for ${accountSid}: ${String(why).slice(0, 200)}`);
+      return res.status(502).json({
+        ok: false,
+        error: "The account could not be verified. Check the Account SID and administrator email, then contact your Exotel representative.",
+      });
+    }
+
+    const creds = findCredentials(data);
+    if (!creds.clientId || !creds.clientSecret) {
+      release();
+      console.log("[credentials] upstream succeeded but no credential pair was found in the response");
+      return res.status(502).json({ ok: false, error: "The credentials could not be read. Contact your Exotel representative." });
+    }
+
+    // Record that this account has been served. The secret is never stored.
+    const done = storeRead();
+    done.issued[sidKey] = { at: new Date().toISOString(), clientId: creds.clientId };
+    storeWrite(done);
+    console.log(`[credentials] issued for ${accountSid} (client id ${creds.clientId})`);
+
+    res.set("Cache-Control", "no-store");
+    res.json({ ok: true, clientId: creds.clientId, clientSecret: creds.clientSecret });
+  } catch (err) {
+    release();
+    console.log(`[credentials] error: ${scrubSecrets(err)}`);
+    res.status(502).json({ ok: false, error: "Could not reach the provisioning service. Try again shortly." });
+  }
 });
 
 app.use((req, res, next) => {

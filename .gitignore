@@ -9,3 +9,9 @@ BUG-REPORT-cross-tenant-binding.md
 
 # Tenant store (contains encrypted client Exotel credentials).
 data/
+
+# Credential portal: which access codes exist and which have been spent.
+data/
+
+# The integration guide is a deliverable: keep it in the repo.
+!docs/

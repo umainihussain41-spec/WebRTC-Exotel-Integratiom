@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Browser Calling with Exotel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --ink:#14243d; --ink-soft:#3d4f68; --ink-faint:#6b7c93;
+  --paper:#ffffff; --paper-2:#f7f9fb; --rule:#dbe2ea; --rule-strong:#b9c5d4;
+  --signal:#0d7f63; --signal-bg:#e8f4f0;
+  --warn:#9a6b0d;   --warn-bg:#fdf5e6;
+  --alarm:#a83338;  --alarm-bg:#fbedee;
+  --wire:#2a5aa8;   --wire-bg:#eaf0fa;
+  --violet:#5b3fa8; --violet-bg:#f0ecfa;
+}
+@page{ size:A4; margin:19mm 16mm 17mm 16mm; }
+*{ box-sizing:border-box; }
+html{ font-size:10.5pt; }
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Spectral",Georgia,"Times New Roman",serif;
+  font-weight:400; line-height:1.58; text-rendering:optimizeLegibility;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+
+/* ---------------- cover ---------------- */
+.cover{ height:252mm; display:flex; flex-direction:column; break-after:page; }
+.cover-rule{ height:6px; background:var(--ink); }
+.cover-rule.thin{ height:2px; background:var(--signal); margin-top:3px; }
+.cover-top{ padding-top:26mm; }
+.cover-eyebrow{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:8.5pt; font-weight:700;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--signal);
+}
+.cover h1{ font-size:40pt; font-weight:700; line-height:1.03; margin:10mm 0 0; letter-spacing:-.02em; }
+.cover h1 em{ font-style:italic; font-weight:300; color:var(--ink-soft); }
+.cover-sub{ font-size:13pt; font-weight:300; color:var(--ink-soft); margin:7mm 0 0; max-width:120mm; line-height:1.45; }
+.cover-meta{
+  margin-top:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:6mm 10mm;
+  border-top:1px solid var(--rule); padding-top:6mm;
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:9pt;
+}
+.cover-meta dt{ font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:7.5pt; color:var(--ink-faint); margin-bottom:1.5mm; }
+.cover-meta dd{ margin:0; color:var(--ink); }
+.cover-abstract{
+  margin-top:8mm; padding:6mm 7mm; background:var(--paper-2);
+  border-left:3px solid var(--signal); font-size:9.5pt; line-height:1.55; color:var(--ink-soft);
+}
+.cover-abstract strong{ color:var(--ink); font-weight:600; }
+
+/* ---------------- structure ---------------- */
+.part{ break-before:page; }
+.part-head{ border-top:3px solid var(--ink); padding-top:4mm; margin-bottom:8mm; }
+.part-num{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:8pt; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--signal);
+}
+.part-head h2{ font-size:22pt; font-weight:600; margin:2mm 0 0; letter-spacing:-.015em; }
+.part-head p{ margin:3mm 0 0; color:var(--ink-soft); font-size:10pt; max-width:150mm; }
+h3{ font-size:13.5pt; font-weight:600; margin:9mm 0 3mm; letter-spacing:-.01em; break-after:avoid; }
+h3 .sec{ font-family:"IBM Plex Mono",monospace; font-size:9.5pt; color:var(--signal); font-weight:600; margin-right:2.5mm; }
+h4{ font-family:"Source Sans 3",system-ui,sans-serif; font-size:10pt; font-weight:700; margin:6mm 0 2mm; color:var(--ink); break-after:avoid; }
+p{ margin:0 0 3.2mm; }
+ul,ol{ margin:0 0 3.5mm; padding-left:5.5mm; }
+li{ margin-bottom:1.6mm; }
+li::marker{ color:var(--ink-faint); }
+strong{ font-weight:600; }
+.lede{ font-size:11.5pt; font-weight:300; line-height:1.5; color:var(--ink-soft); margin-bottom:5mm; }
+
+/* ---------------- contents ---------------- */
+.toc{ break-after:page; }
+.toc h2{ font-size:17pt; font-weight:600; margin:0 0 6mm; padding-bottom:2mm; border-bottom:2px solid var(--ink); }
+.toc-group{ margin-bottom:5mm; break-inside:avoid; }
+.toc-group-title{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:8pt; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--signal); margin-bottom:2mm;
+}
+.toc ol{ list-style:none; margin:0; padding:0; }
+.toc li{ display:flex; gap:3mm; align-items:baseline; font-size:9.5pt; margin-bottom:1.3mm; color:var(--ink-soft); }
+.toc li .n{ font-family:"IBM Plex Mono",monospace; font-size:8.5pt; color:var(--ink-faint); min-width:9mm; }
+
+/* ---------------- code ---------------- */
+.code{
+  background:#0f1b2d; color:#dce6f2;
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:8.2pt; line-height:1.62;
+  padding:4mm 5mm; margin:0 0 4mm; border-radius:2px;
+  white-space:pre; overflow-x:auto; break-inside:avoid;
+}
+.code .c{ color:#7d8fa6; font-style:italic; }
+.code .k{ color:#7fd6b5; }
+.code .u{ color:#8fbaf0; }
+.code .s{ color:#e8c98a; }
+.code .n{ color:#e59aa0; }
+.code .p{ color:#b9a7e8; }
+.code .hl{ background:rgba(127,214,181,.14); display:block; margin:0 -5mm; padding:0 5mm; }
+.code .bad{ background:rgba(232,120,128,.15); display:block; margin:0 -5mm; padding:0 5mm; }
+code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.87em;
+  background:var(--paper-2); padding:.5mm 1.2mm; border-radius:2px;
+  color:var(--ink); border:.5px solid var(--rule);
+}
+.code-label{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:7.5pt; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+  margin:0 0 1.5mm; display:flex; gap:2mm; align-items:center; break-after:avoid;
+}
+.code-label .tag{ background:var(--wire); color:#fff; padding:.4mm 1.8mm; border-radius:2px; letter-spacing:.06em; font-size:7pt; }
+.code-label .tag.res{ background:var(--signal); }
+.code-label .tag.err{ background:var(--alarm); }
+
+/* ---------------- tables ---------------- */
+table{
+  width:100%; border-collapse:collapse; margin:0 0 4.5mm;
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:8.6pt; break-inside:avoid;
+}
+caption{
+  caption-side:top; text-align:left; font-family:"Source Sans 3",system-ui,sans-serif;
+  font-size:7.5pt; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); padding-bottom:1.8mm;
+}
+th{ text-align:left; font-weight:700; color:var(--ink); border-bottom:1.5px solid var(--ink); padding:1.8mm 2.5mm 1.8mm 0; vertical-align:bottom; }
+td{ border-bottom:.5px solid var(--rule); padding:1.8mm 2.5mm 1.8mm 0; vertical-align:top; color:var(--ink-soft); }
+td code{ font-size:8pt; background:none; border:none; padding:0; color:var(--ink); }
+tbody tr:last-child td{ border-bottom:1px solid var(--rule-strong); }
+.t-num{ font-variant-numeric:tabular-nums; }
+
+/* ---------------- callouts ---------------- */
+.note{ border-left:3px solid var(--wire); background:var(--wire-bg); padding:3.5mm 4.5mm; margin:0 0 4.5mm; font-size:9.3pt; break-inside:avoid; }
+.note.warn{ border-color:var(--warn); background:var(--warn-bg); }
+.note.alarm{ border-color:var(--alarm); background:var(--alarm-bg); }
+.note.good{ border-color:var(--signal); background:var(--signal-bg); }
+.note-title{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:7.5pt; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; margin-bottom:1.5mm; color:var(--wire);
+}
+.note.warn .note-title{ color:var(--warn); }
+.note.alarm .note-title{ color:var(--alarm); }
+.note.good .note-title{ color:var(--signal); }
+.note p:last-child{ margin-bottom:0; }
+.plain{
+  border:1px solid var(--rule-strong); border-left:3px solid var(--violet);
+  background:var(--violet-bg); padding:3.5mm 4.5mm; margin:0 0 4.5mm; font-size:9.3pt; break-inside:avoid;
+}
+.plain .note-title{ color:var(--violet); }
+.plain p:last-child{ margin-bottom:0; }
+
+/* ---------------- figures ---------------- */
+figure{ margin:0 0 5mm; padding:4mm 4mm 3mm; border:1px solid var(--rule); background:var(--paper-2); break-inside:avoid; }
+figure svg{ width:100%; height:auto; display:block; }
+figcaption{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:8pt; color:var(--ink-faint);
+  margin-top:3mm; padding-top:2mm; border-top:.5px solid var(--rule); line-height:1.45;
+}
+figcaption b{ color:var(--ink); font-weight:700; }
+
+/* ---------------- item cards ---------------- */
+.item{ border:1px solid var(--rule-strong); margin:0 0 4.5mm; break-inside:avoid; }
+.item-head{
+  background:var(--ink); color:#fff; padding:2.5mm 4mm;
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:9.5pt; font-weight:700;
+  display:flex; gap:3mm; align-items:baseline;
+}
+.item-head .no{ font-family:"IBM Plex Mono",monospace; font-size:8pt; color:#7fd6b5; font-weight:600; }
+.item-body{ padding:3.5mm 4mm 1mm; }
+.item-row{ display:flex; gap:3mm; margin-bottom:2.5mm; font-size:9.2pt; }
+.item-row .lbl{
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:7.5pt; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint);
+  min-width:20mm; padding-top:.6mm; flex:none;
+}
+.item-row .val{ flex:1; }
+.item-row.symptom .lbl{ color:var(--alarm); }
+.item-row.fix .lbl{ color:var(--signal); }
+
+/* ---------------- misc ---------------- */
+.badge{ display:inline-block; font-family:"Source Sans 3",system-ui,sans-serif; font-size:7.2pt; font-weight:700; letter-spacing:.08em; padding:.5mm 1.8mm; border-radius:2px; vertical-align:.4mm; }
+.badge.get{ background:var(--signal-bg); color:var(--signal); }
+.badge.post{ background:var(--wire-bg); color:var(--wire); }
+.badge.ok{ background:var(--signal-bg); color:var(--signal); }
+.badge.err{ background:var(--alarm-bg); color:var(--alarm); }
+.kv{ display:grid; grid-template-columns:34mm 1fr; gap:1.5mm 4mm; font-size:9.2pt; margin:0 0 4mm; }
+.kv dt{ font-family:"Source Sans 3",system-ui,sans-serif; font-weight:700; font-size:8.4pt; color:var(--ink-faint); }
+.kv dd{ margin:0; }
+.checklist{ list-style:none; padding:0; }
+.checklist li{ display:flex; gap:3mm; align-items:flex-start; padding:2mm 0; border-bottom:.5px solid var(--rule); font-size:9.4pt; }
+.checklist li .box{ width:3.6mm; height:3.6mm; border:1.2px solid var(--ink-faint); border-radius:1px; flex:none; margin-top:1mm; }
+.steps{ counter-reset:step; list-style:none; padding:0; margin:0 0 4.5mm; }
+.steps li{
+  counter-increment:step; position:relative; padding-left:9mm; margin-bottom:3mm; font-size:9.6pt;
+}
+.steps li::before{
+  content:counter(step); position:absolute; left:0; top:.3mm;
+  width:5.5mm; height:5.5mm; border-radius:50%; background:var(--signal); color:#fff;
+  font-family:"Source Sans 3",sans-serif; font-size:7.5pt; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.footnote{ font-size:8.4pt; color:var(--ink-faint); font-style:italic; border-top:.5px solid var(--rule); padding-top:2mm; margin-top:4mm; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="cover">
+  <div class="cover-rule"></div>
+  <div class="cover-rule thin"></div>
+  <div class="cover-top">
+    <div class="cover-eyebrow">Implementation Guide &middot; IP&ndash;PSTN WebRTC</div>
+    <h1>Browser Calling<br />with Exotel<br /><em>provisioning to live call</em></h1>
+    <p class="cover-sub">
+      Account requirements, the complete API surface, exact request and response
+      bodies, and the implementation details required for a working integration.
+      Based on a full production build.
+    </p>
+  </div>
+
+  <div class="cover-abstract">
+    <strong>Scope.</strong> Turning a web page into a working telephone:
+    obtaining credentials, provisioning an Exotel application, creating a WebRTC
+    agent, registering a browser onto Exotel's SIP network, placing and
+    receiving calls, and recording them. Every API call shown was executed
+    against a live account, and every response body is genuine with secrets
+    removed. The final part collects five implementation details that repay
+    attention early.
+  </div>
+
+  <dl class="cover-meta">
+    <div><dt>Document type</dt><dd>Engineering implementation guide</dd></div>
+    <div><dt>Audience</dt><dd>Engineers, with plain-language notes throughout</dd></div>
+    <div><dt>Platform</dt><dd>Exotel IP&ndash;PSTN WebRTC, Mumbai region</dd></div>
+    <div><dt>SDK</dt><dd><code>@exotel-npm-dev/exotel-ip-calling-crm-websdk</code> 1.2.2</dd></div>
+    <div><dt>Verified</dt><dd>Live account, outbound call completed</dd></div>
+    <div><dt>Status</dt><dd>Production ready</dd></div>
+  </dl>
+</section>
+
+<!-- ============================ CONTENTS ============================ -->
+<section class="toc">
+  <h2>Contents</h2>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part I &middot; Orientation</div>
+    <ol>
+      <li><span class="n">1</span><span>What browser calling is</span></li>
+      <li><span class="n">2</span><span>System components and the role of the backend</span></li>
+      <li><span class="n">3</span><span>Vocabulary</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part II &middot; Exotel account requirements</div>
+    <ol>
+      <li><span class="n">4</span><span>Account prerequisites</span></li>
+      <li><span class="n">5</span><span>The four credential pairs</span></li>
+      <li><span class="n">6</span><span>The two API families</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part III &middot; Provisioning</div>
+    <ol>
+      <li><span class="n">7</span><span>Step one: mint a customer token</span></li>
+      <li><span class="n">8</span><span>Step two: register the application</span></li>
+      <li><span class="n">9</span><span>Step three: mint an application token</span></li>
+      <li><span class="n">10</span><span>Step four: create the WebRTC agent</span></li>
+      <li><span class="n">11</span><span>Step five: turn on recording</span></li>
+      <li><span class="n">12</span><span>Step six: verification</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part IV &middot; Browser integration</div>
+    <ol>
+      <li><span class="n">13</span><span>What the SDK does on initialisation</span></li>
+      <li><span class="n">14</span><span>SIP registration over WebSocket</span></li>
+      <li><span class="n">15</span><span>Placing an outbound call</span></li>
+      <li><span class="n">16</span><span>Receiving an inbound call</span></li>
+      <li><span class="n">17</span><span>Microphone access and browser policy</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part V &middot; Operations</div>
+    <ol>
+      <li><span class="n">18</span><span>Call recording</span></li>
+      <li><span class="n">19</span><span>Reading call detail records</span></li>
+      <li><span class="n">20</span><span>Production deployment</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Part VI &middot; Implementation notes</div>
+    <ol>
+      <li><span class="n">21</span><span>Five implementation considerations</span></li>
+      <li><span class="n">22</span><span>Error reference</span></li>
+      <li><span class="n">23</span><span>Verification checklist</span></li>
+    </ol>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-title">Appendices</div>
+    <ol>
+      <li><span class="n">A</span><span>Endpoint reference</span></li>
+      <li><span class="n">B</span><span>Glossary</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ PART I ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part I</div>
+    <h2>Orientation</h2>
+    <p>System overview, the components involved, and the terminology used throughout this document.</p>
+  </div>
+
+  <h3><span class="sec">1</span>What browser calling is</h3>
+
+  <p class="lede">
+    A conventional call travels over the telephone network. A WebRTC call
+    travels over the internet. Exotel's IP&ndash;PSTN product bridges the two, and
+    the name describes the function: IP on one side, the public switched
+    telephone network on the other.
+  </p>
+
+  <p>
+    An agent works in a browser with a headset. When they call a customer's
+    mobile, audio leaves the browser as internet packets, reaches Exotel, and is
+    converted into an ordinary telephone call delivered to the handset. The
+    customer sees your ExoPhone number as the caller ID. In the reverse
+    direction, a customer dials your ExoPhone, Exotel converts that call into
+    internet packets, and the agent's browser rings.
+  </p>
+
+  <div class="plain">
+    <div class="note-title">In plain language</div>
+    <p>
+      Exotel acts as a translator between two networks. The browser sends audio
+      over the internet; a mobile phone expects audio from the telephone
+      network. Exotel converts between the two in real time, so neither side is
+      aware of the other's format. For the agent this means a computer, a
+      headset and a web page are sufficient. No desk phone, SIM card or
+      telephone line is required.
+    </p>
+  </div>
+
+  <p>
+    Two consequences shape the rest of this guide. First, because the browser
+    handles real-time audio, browser rules apply: microphone permission, secure
+    origins and autoplay policy. Second, because Exotel places real telephone
+    calls on your behalf, platform rules apply: account verification, balance,
+    and a provisioned identity for every agent. A substantial part of the
+    integration effort is meeting these two sets of requirements rather than
+    writing application code.
+  </p>
+
+  <h3><span class="sec">2</span>System components and the role of the backend</h3>
+
+  <p>
+    Three components are involved. The distinction that matters is which of them
+    is permitted to hold credentials.
+  </p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" role="img" aria-label="Architecture diagram showing browser, backend server and Exotel, with secrets held only on the server">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d7f63"/>
+        </marker>
+      </defs>
+      <rect x="18" y="52" width="150" height="86" rx="3" fill="#ffffff" stroke="currentColor" stroke-width="1.4"/>
+      <text x="93" y="80" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="700" fill="currentColor">Browser</text>
+      <text x="93" y="99" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="10.5" fill="#6b7c93">agent and headset</text>
+      <text x="93" y="115" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#a83338">holds no secrets</text>
+
+      <rect x="285" y="52" width="150" height="86" rx="3" fill="#ffffff" stroke="currentColor" stroke-width="1.4"/>
+      <text x="360" y="80" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="700" fill="currentColor">Your server</text>
+      <text x="360" y="99" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="10.5" fill="#6b7c93">Node and Express</text>
+      <text x="360" y="115" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#0d7f63">holds every secret</text>
+
+      <rect x="552" y="52" width="150" height="86" rx="3" fill="#14243d" stroke="#14243d" stroke-width="1.4"/>
+      <text x="627" y="80" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Exotel</text>
+      <text x="627" y="99" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="10.5" fill="#9db0c8">iCore, SIP and PSTN</text>
+
+      <line x1="170" y1="82" x2="281" y2="82" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah)"/>
+      <text x="225" y="76" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">requests a token</text>
+      <line x1="281" y1="108" x2="170" y2="108" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah)"/>
+      <text x="225" y="124" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">short lived token only</text>
+      <line x1="437" y1="82" x2="548" y2="82" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah)"/>
+      <text x="492" y="76" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">Id and Secret</text>
+      <line x1="548" y1="108" x2="437" y2="108" stroke="currentColor" stroke-width="1.3" marker-end="url(#ah)"/>
+      <text x="492" y="124" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">JWT</text>
+
+      <path d="M 93 150 L 93 200 L 627 200 L 627 150" fill="none" stroke="#0d7f63" stroke-width="1.8" stroke-dasharray="6 3" marker-end="url(#ahg)"/>
+      <rect x="246" y="188" width="228" height="24" fill="#f7f9fb"/>
+      <text x="360" y="205" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="10.5" font-weight="600" fill="#0d7f63">audio: browser direct to Exotel</text>
+      <text x="360" y="232" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">SIP over WSS, then RTP. The backend is not in the media path.</text>
+    </svg>
+    <figcaption>
+      <b>Figure 1.</b> Control and media take separate routes. The backend
+      brokers credentials and never carries voice; audio passes directly between
+      the browser and Exotel. A small server is therefore sufficient, and server
+      latency does not affect call quality.
+    </figcaption>
+  </figure>
+
+  <p>
+    A backend is required rather than optional. The browser needs an access
+    token to communicate with Exotel, and that token is minted from a secret. A
+    secret placed in JavaScript is published: anyone reading the page source
+    could place calls billed to the account. The secret therefore resides on the
+    server, the server mints tokens, and the browser receives only the token.
+  </p>
+
+  <h3><span class="sec">3</span>Vocabulary</h3>
+
+  <table>
+    <caption>Terms used throughout this document</caption>
+    <thead><tr><th style="width:32mm">Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><b>PSTN</b></td><td>Public Switched Telephone Network. The telephone system that mobiles and landlines operate on.</td></tr>
+      <tr><td><b>WebRTC</b></td><td>The browser technology that carries live audio and video. Built into Chrome, Edge, Safari and Firefox.</td></tr>
+      <tr><td><b>SIP</b></td><td>Session Initiation Protocol. The signalling protocol that establishes, answers and ends calls. It does not carry audio.</td></tr>
+      <tr><td><b>RTP</b></td><td>The protocol that carries the audio once SIP has established the call.</td></tr>
+      <tr><td><b>ExoPhone</b></td><td>An Exotel virtual number. It is the caller ID customers see and the number they dial to reach you.</td></tr>
+      <tr><td><b>iCore</b></td><td>Exotel's integrations service. All WebRTC provisioning is performed against it.</td></tr>
+      <tr><td><b>Application</b></td><td>An Exotel object representing your integration. It owns agents and settings and has its own credential pair.</td></tr>
+      <tr><td><b>User mapping</b></td><td>The record that maps an agent's email address to a SIP identity. Creating one constitutes provisioning an agent.</td></tr>
+      <tr><td><b>CallSid</b></td><td>Exotel's unique identifier for a call, required to retrieve status, duration and recordings.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ PART II ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part II</div>
+    <h2>Exotel account requirements</h2>
+    <p>Account conditions that must be met before integration, and the credentials required for each API.</p>
+  </div>
+
+  <h3><span class="sec">4</span>Account prerequisites</h3>
+
+  <p>
+    Four conditions must hold on the Exotel side before a browser can place a
+    call. Each produces a different error, so checking them in this order will
+    save time.
+  </p>
+
+  <h4>4.1 The account must not be on trial</h4>
+
+  <p>
+    A trial account can authenticate and register an application but cannot
+    create a WebRTC agent. The attempt returns:
+  </p>
+
+  <div class="code-label"><span class="tag err">Response</span> creating an agent on a trial account</div>
+  <div class="code"><span class="p">{</span>
+  <span class="p">"Status"</span>: <span class="s">"Failed"</span>,
+  <span class="p">"Code"</span>: <span class="n">403</span>,
+<span class="bad">  <span class="p">"Error"</span>: <span class="s">"This is a trial account. Operation not permitted."</span></span><span class="p">}</span></div>
+
+  <p>
+    This is enabled on Exotel's side. Contact your Exotel representative to have
+    the account enabled for IP&ndash;PSTN WebRTC, which normally requires a signed
+    agreement and completed KYC. The account state can be confirmed through the
+    Voice API, where the field to check is <code>Type</code>:
+  </p>
+
+  <div class="code-label"><span class="tag get">GET</span> account status</div>
+  <div class="code"><span class="k">GET</span> <span class="u">https://api.in.exotel.com/v1/Accounts/&lt;sid&gt;.json</span>
+<span class="k">Authorization:</span> Basic base64(API_KEY:API_TOKEN)
+
+<span class="c">// response, trimmed</span>
+<span class="p">{</span> <span class="p">"Account"</span>: <span class="p">{</span>
+<span class="hl">    <span class="p">"Type"</span>: <span class="s">"Full"</span>,            <span class="c">// "Trial" blocks agent creation</span></span>    <span class="p">"Status"</span>: <span class="s">"active"</span>,
+    <span class="p">"BillingType"</span>: <span class="s">"prepaid"</span>,
+    <span class="p">"KycStatus"</span>: <span class="s">"completed"</span>
+<span class="p">} }</span></div>
+
+  <h4>4.2 The account must have balance</h4>
+
+  <p>
+    On a prepaid account, calls are placed only while there is balance to bill
+    them against. Everything else continues to operate normally, so credentials,
+    provisioning and SIP registration all report healthy while calls are
+    declined. If calls are declined while registration is green, check the
+    balance first, or ask Exotel support to confirm the account state.
+  </p>
+
+  <h4>4.3 An ExoPhone is required</h4>
+
+  <p>
+    The virtual number serves two purposes. On outbound calls it is the caller
+    ID presented to the customer. On inbound calls it is the number customers
+    dial. Each agent carries one on their record as <code>VirtualNumber</code>,
+    and agents on the same team commonly share it.
+  </p>
+
+  <h4>4.4 Inbound routing is configured in the dashboard</h4>
+
+  <p>
+    Provisioning an agent grants the ability to receive calls but does not
+    determine which calls are delivered. What happens when a customer dials your
+    ExoPhone is decided by a call flow, and that flow is built in the Exotel
+    dashboard rather than through the APIs in this guide.
+  </p>
+
+  <div class="note warn">
+    <div class="note-title">Dashboard step required</div>
+    <p>
+      In the Exotel dashboard, attach your ExoPhone to a flow whose applet
+      connects the call to the VoIP or WebRTC agent, identified by the agent's
+      email address. Until this exists, outbound browser calls operate normally
+      and inbound calls are not delivered. No code change is involved.
+    </p>
+  </div>
+
+  <h3><span class="sec">5</span>The four credential pairs</h3>
+
+  <p>
+    Exotel issues several credentials with similar names. Using the wrong one
+    produces an authorisation error that does not identify which. There are
+    four, and they are not interchangeable.
+  </p>
+
+  <table>
+    <caption>Credentials and their purpose</caption>
+    <thead><tr><th style="width:36mm">Pair</th><th style="width:28mm">Used for</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>API Key</code><br /><code>API Token</code></td>
+        <td>Voice API v1</td>
+        <td>REST over HTTP Basic. Used for account status and call detail records. Not used by WebRTC.</td>
+      </tr>
+      <tr>
+        <td><code>Client ID</code><br /><code>Client Secret</code></td>
+        <td>Customer entity</td>
+        <td>Identifies you as the customer. Used once, to register an application. The Client ID is also the CustomerID.</td>
+      </tr>
+      <tr>
+        <td><code>App ID</code><br /><code>App Secret</code></td>
+        <td>Application entity</td>
+        <td>Returned when the application is registered. All WebRTC operations use this pair. Store it.</td>
+      </tr>
+      <tr>
+        <td><code>SIP ID</code><br /><code>SIP Secret</code></td>
+        <td>The browser</td>
+        <td>Generated by Exotel per agent. Never handled directly; the SDK retrieves it. Never send it to an untrusted client.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>5.1 Obtaining each credential</h4>
+
+  <p>
+    Two of the four pairs are obtained directly. The remaining two are issued by
+    the platform during provisioning and are returned in API responses, so they
+    will not be found in the dashboard.
+  </p>
+
+  <table>
+    <caption>How to obtain each credential</caption>
+    <thead><tr><th style="width:36mm">Pair</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>API Key</code><br /><code>API Token</code></td>
+        <td>Exotel dashboard, under the API settings for your account. Self-service.</td>
+      </tr>
+      <tr>
+        <td><code>Client ID</code><br /><code>Client Secret</code></td>
+        <td><b>Issued through the credential portal</b> using the access code supplied with this guide. See below.</td>
+      </tr>
+      <tr>
+        <td><code>App ID</code><br /><code>App Secret</code></td>
+        <td>Returned in the response when the application is registered in section 8.</td>
+      </tr>
+      <tr>
+        <td><code>SIP ID</code><br /><code>SIP Secret</code></td>
+        <td>Generated automatically when an agent is created in section 10. Retrieved by the SDK.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>5.2 Issuing your Client ID and Client Secret</h4>
+
+  <p>
+    These are issued to you through a secure portal rather than being available
+    in the dashboard. The process takes about a minute and requires three
+    values, all of which you already have.
+  </p>
+
+  <ol class="steps">
+    <li>
+      Open the credential portal at the address supplied with this guide, using
+      the <strong>access code</strong> provided alongside it. The code is valid
+      for a single use.
+    </li>
+    <li>
+      Enter your <strong>Account SID</strong>, the identifier for your Exotel
+      account.
+    </li>
+    <li>
+      Enter the <strong>administrator email address</strong> registered on that
+      Exotel account. The portal verifies this against the account, so it must
+      match.
+    </li>
+    <li>
+      The Client ID and Client Secret are displayed. Copy both immediately into
+      your password manager or environment file.
+    </li>
+  </ol>
+
+  <div class="note alarm">
+    <div class="note-title">The credentials are displayed once</div>
+    <p>
+      The portal shows the pair a single time and does not retain the secret.
+      The access code cannot be reused, and each Account SID is served once.
+      Copy both values before closing the window. If they are subsequently lost,
+      contact your Exotel representative rather than returning to the portal.
+    </p>
+  </div>
+
+  <p>
+    Store them as <code>EXOTEL_CLIENT_ID</code> and
+    <code>EXOTEL_CLIENT_SECRET</code> alongside your other Exotel credentials.
+    They are used once, in section 7, to mint the customer token that registers
+    your application. After that point every operation uses the application
+    credentials instead.
+  </p>
+
+  <div class="note good">
+    <div class="note-title">Obtain these before you begin</div>
+    <p>
+      The Client ID and Client Secret are the only prerequisite that cannot be
+      satisfied from your own code. Requesting them first means the rest of
+      Parts I and II, along with reading the SDK and building your interface,
+      can proceed in parallel. If your account also needs enabling for
+      IP&ndash;PSTN WebRTC, as described in section 4.1, raise both with your
+      Exotel representative at the same time.
+    </p>
+  </div>
+
+  <div class="note alarm">
+    <div class="note-title">Confirm which value is the key and which is the token</div>
+    <p>
+      The API Key and API Token are both opaque strings of similar length and
+      the same character set. Nothing in either value identifies which is which,
+      so once they have been copied out of a portal, pasted into a spreadsheet
+      or forwarded by email, the order is easily lost. HTTP Basic auth is
+      order-sensitive: the key is the username and the token is the password.
+    </p>
+    <p>
+      A reversed pair and an invalid credential produce an identical failure, so
+      the error message does not distinguish between them. Confirm the order
+      with a single read-only request, attempted both ways, before concluding
+      that the credentials are invalid.
+    </p>
+  </div>
+
+  <div class="code-label">Determining the correct order</div>
+  <div class="code"><span class="c">// GET /v1/Accounts/&lt;sid&gt;.json is read only and has no side effects,</span>
+<span class="c">// which makes it a suitable probe. Whichever order returns 200 is correct.</span>
+
+<span class="k">const</span> probe = (user, pass) =&gt;
+  fetch(<span class="s">`https://api.in.exotel.com/v1/Accounts/</span>${sid}<span class="s">.json`</span>, <span class="p">{</span>
+    headers: <span class="p">{</span> Authorization: <span class="s">"Basic "</span> + btoa(<span class="s">`</span>${user}<span class="s">:</span>${pass}<span class="s">`</span>) <span class="p">}</span>
+  <span class="p">}</span>).then(r =&gt; r.status);
+
+<span class="k">await</span> probe(A, B);   <span class="c">// 200 means A is the key and B is the token</span>
+<span class="k">await</span> probe(B, A);   <span class="c">// 200 means the labels were reversed</span>
+<span class="c">// 401 or 403 both ways means the credentials are genuinely invalid</span></div>
+
+  <h3><span class="sec">6</span>The two API families</h3>
+
+  <p>
+    Exotel exposes two API families with separate base URLs and separate
+    authentication schemes. Identifying which family an endpoint belongs to
+    determines how it must be authenticated.
+  </p>
+
+  <table>
+    <caption>The two families</caption>
+    <thead><tr><th style="width:30mm"></th><th style="width:52mm">iCore integrations</th><th>Voice API v1</th></tr></thead>
+    <tbody>
+      <tr><td><b>Auth</b></td><td>JWT in <code>Authorization</code></td><td>HTTP Basic, key and token</td></tr>
+      <tr><td><b>Style</b></td><td>JSON in, JSON out</td><td>Form encoded in, JSON out</td></tr>
+      <tr><td><b>Casing</b></td><td><code>PascalCase</code> keys</td><td><code>PascalCase</code> keys</td></tr>
+      <tr><td><b>Owns</b></td><td>Applications, agents, settings, WebRTC calls</td><td>Account status, call records</td></tr>
+      <tr><td><b>Region</b></td><td>Regional host, <code>mum1</code> for Mumbai</td><td><code>api.in</code> for India</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Everything in Part III is iCore. The Voice API appears twice in this guide:
+    to check the account type in section 4.1 and to read call detail records in
+    section 19.
+  </p>
+</section>
+
+<!-- ============================ PART III ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part III</div>
+    <h2>Provisioning</h2>
+    <p>Six API calls, in sequence, from initial credentials to an agent capable of registering a browser.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 720 320" role="img" aria-label="Provisioning sequence: customer token, register app, app token, create agent, enable recording, verify">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="118" y="22" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11.5" font-weight="700" fill="currentColor">Your machine</text>
+      <text x="560" y="22" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11.5" font-weight="700" fill="currentColor">Exotel iCore</text>
+      <line x1="118" y1="32" x2="118" y2="300" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="560" y1="32" x2="560" y2="300" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+      <g font-family="IBM Plex Mono, monospace" font-size="9.5">
+        <line x1="118" y1="58" x2="556" y2="58" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="52" text-anchor="middle" fill="#2a5aa8">1  POST /token   Entity: customer</text>
+        <line x1="560" y1="78" x2="122" y2="78" stroke="#0d7f63" stroke-width="1.4" marker-end="url(#ah2)" color="#0d7f63"/>
+        <text x="337" y="72" text-anchor="middle" fill="#0d7f63">customer JWT</text>
+        <line x1="118" y1="112" x2="556" y2="112" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="106" text-anchor="middle" fill="#2a5aa8">2  POST /app   register application</text>
+        <line x1="560" y1="132" x2="122" y2="132" stroke="#0d7f63" stroke-width="1.4" marker-end="url(#ah2)" color="#0d7f63"/>
+        <text x="337" y="126" text-anchor="middle" fill="#0d7f63">AppID and AppSecret   (store these)</text>
+        <line x1="118" y1="166" x2="556" y2="166" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="160" text-anchor="middle" fill="#2a5aa8">3  POST /token   Entity: app</text>
+        <line x1="560" y1="186" x2="122" y2="186" stroke="#0d7f63" stroke-width="1.4" marker-end="url(#ah2)" color="#0d7f63"/>
+        <text x="337" y="180" text-anchor="middle" fill="#0d7f63">app JWT   (90 day life)</text>
+        <line x1="118" y1="220" x2="556" y2="220" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="214" text-anchor="middle" fill="#2a5aa8">4  POST /usermapping   create agent</text>
+        <line x1="118" y1="254" x2="556" y2="254" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="248" text-anchor="middle" fill="#2a5aa8">5  POST /app_setting   record = true</text>
+        <line x1="118" y1="288" x2="556" y2="288" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah2)" color="#2a5aa8"/>
+        <text x="337" y="282" text-anchor="middle" fill="#2a5aa8">6  GET /usermapping   verify</text>
+      </g>
+    </svg>
+    <figcaption>
+      <b>Figure 2.</b> The provisioning sequence. Step 1 uses customer
+      credentials; every step after step 3 uses application credentials.
+      Interchanging them is the most common cause of a 401 at this stage.
+    </figcaption>
+  </figure>
+
+  <h3><span class="sec">7</span>Step one: mint a customer token</h3>
+
+  <p>
+    Every iCore call is authorised by a JSON Web Token, and tokens are issued by
+    a single endpoint. The body has exactly three fields and their names matter:
+    <code>Id</code>, <code>Secret</code> and <code>Entity</code>. The
+    <code>Entity</code> field selects which kind of token is returned.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> mint a customer token</div>
+  <div class="code"><span class="k">POST</span> <span class="u">{icore}/v2/integrations/token</span>
+<span class="k">Content-Type:</span> application/json
+
+<span class="p">{</span>
+  <span class="p">"Id"</span>:     <span class="s">"&lt;your client id&gt;"</span>,
+  <span class="p">"Secret"</span>: <span class="s">"&lt;your client secret&gt;"</span>,
+  <span class="p">"Entity"</span>: <span class="s">"customer"</span>
+<span class="p">}</span></div>
+
+  <div class="code-label"><span class="tag res">200</span> response</div>
+  <div class="code"><span class="p">{</span>
+  <span class="p">"RequestId"</span>: <span class="s">"ceecabdd-424b-4323-82ea-511697ed9db9"</span>,
+  <span class="p">"Status"</span>:    <span class="s">"Success"</span>,
+  <span class="p">"Code"</span>:      <span class="n">200</span>,
+  <span class="p">"Error"</span>:     <span class="s">""</span>,
+<span class="hl">  <span class="p">"Data"</span>:      <span class="s">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6..."</span></span><span class="p">}</span></div>
+
+  <p>
+    The token is returned in <code>Data</code> as a bare string. Every iCore
+    endpoint uses this response shape: a <code>Status</code> of
+    <code>"Success"</code> or <code>"Failed"</code>, a numeric
+    <code>Code</code>, an <code>Error</code> string that is empty on success,
+    and a <code>Data</code> payload. Check <code>Status</code> rather than
+    relying on the HTTP code alone.
+  </p>
+
+  <p>
+    Pass the token in the <code>Authorization</code> header exactly as returned,
+    with no <code>Bearer</code> prefix. Decoded, the payload is minimal:
+    <code>{ "Id": "&lt;app or client id&gt;", "exp": … }</code>. It carries no
+    account claim, which is relevant to section 21, item five.
+  </p>
+
+  <h3><span class="sec">8</span>Step two: register the application</h3>
+
+  <p>
+    The application owns your agents and settings. It is created once, using the
+    customer token, and your Voice API credentials are supplied at the same time
+    so the application can place calls.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> register the application</div>
+  <div class="code"><span class="k">POST</span> <span class="u">{icore}/v2/integrations/app</span>
+<span class="k">Authorization:</span> &lt;customer token&gt;
+<span class="k">Content-Type:</span> application/json
+
+<span class="p">{</span>
+  <span class="p">"AppName"</span>:          <span class="s">"webdialer"</span>,
+  <span class="p">"ExotelAccountSid"</span>: <span class="s">"&lt;your account sid&gt;"</span>,
+  <span class="p">"ExotelApiKey"</span>:     <span class="s">"&lt;api key&gt;"</span>,
+  <span class="p">"ExotelApiToken"</span>:   <span class="s">"&lt;api token&gt;"</span>,
+  <span class="p">"ExotelDomain"</span>:     <span class="s">"mumbai"</span>,
+  <span class="p">"IsActive"</span>:         <span class="n">true</span>
+<span class="p">}</span></div>
+
+  <div class="code-label"><span class="tag res">200</span> response</div>
+  <div class="code"><span class="p">{</span> <span class="p">"Status"</span>: <span class="s">"Success"</span>, <span class="p">"Code"</span>: <span class="n">200</span>, <span class="p">"Data"</span>: <span class="p">{</span>
+<span class="hl">    <span class="p">"AppID"</span>:            <span class="s">"&lt;uuid&gt;"</span>,</span><span class="hl">    <span class="p">"AppSecret"</span>:        <span class="s">"&lt;returned once, store it now&gt;"</span>,</span>    <span class="p">"CustomerID"</span>:       <span class="s">"&lt;uuid, same as your client id&gt;"</span>,
+    <span class="p">"AppName"</span>:          <span class="s">"webdialer"</span>,
+    <span class="p">"ExotelAccountSid"</span>: <span class="s">"&lt;your account sid&gt;"</span>,
+    <span class="p">"IsActive"</span>:         <span class="n">true</span>
+<span class="p">} }</span></div>
+
+  <div class="note">
+    <div class="note-title">Make this step idempotent</div>
+    <p>
+      Registering twice creates a second application, which then competes for
+      the same agents. Before creating, attempt to mint an app token with any
+      stored credentials and call <code>GET /v2/integrations/app</code>. If it
+      returns the expected application, skip creation. A provisioning script
+      built this way can be re-run safely at any time.
+    </p>
+  </div>
+
+  <h3><span class="sec">9</span>Step three: mint an application token</h3>
+
+  <p>
+    The same endpoint as step one, with a different entity and different
+    credentials. From this point onward, every WebRTC operation uses this token.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> mint an application token</div>
+  <div class="code"><span class="k">POST</span> <span class="u">{icore}/v2/integrations/token</span>
+<span class="k">Content-Type:</span> application/json
+
+<span class="p">{</span>
+  <span class="p">"Id"</span>:     <span class="s">"&lt;AppID&gt;"</span>,
+  <span class="p">"Secret"</span>: <span class="s">"&lt;AppSecret&gt;"</span>,
+<span class="hl">  <span class="p">"Entity"</span>: <span class="s">"app"</span>                    <span class="c">// not "customer"</span></span><span class="p">}</span></div>
+
+  <p>
+    The application token observed on a live account was 164 characters with a
+    90 day expiry. That is long enough that a refresh loop is unnecessary, but a
+    long-lived deployment should mint a fresh token per browser session rather
+    than embedding one.
+  </p>
+
+  <h3><span class="sec">10</span>Step four: create the WebRTC agent</h3>
+
+  <p>
+    This is the step a trial account blocks. It creates a user mapping, which
+    links an email address you choose to a SIP identity Exotel generates. The
+    request body is an array, even for a single agent.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> create an agent</div>
+  <div class="code"><span class="k">POST</span> <span class="u">{icore}/v2/integrations/usermapping</span>
+<span class="k">Authorization:</span> &lt;app token&gt;
+<span class="k">Content-Type:</span> application/json
+
+<span class="hl"><span class="p">[</span>                                    <span class="c">// an array, not an object</span></span>  <span class="p">{</span>
+    <span class="p">"AppUserId"</span>:        <span class="s">"agent@example.com"</span>,
+    <span class="p">"AppUsername"</span>:      <span class="s">"Agent Name"</span>,
+    <span class="p">"Email"</span>:            <span class="s">"agent@example.com"</span>,
+    <span class="p">"ExotelAccountSid"</span>: <span class="s">"&lt;your account sid&gt;"</span>,
+    <span class="p">"ExotelUserName"</span>:   <span class="s">"Agent Name"</span>,
+    <span class="p">"VirtualNumber"</span>:    <span class="s">"&lt;your exophone&gt;"</span>,
+    <span class="p">"AgentNumber"</span>:      <span class="s">"&lt;optional fallback phone&gt;"</span>
+  <span class="p">}</span>
+<span class="p">]</span></div>
+
+  <p>
+    Reading the agent record back returns the values Exotel generated. This
+    record is the primary diagnostic reference for an agent, so each field is
+    described below.
+  </p>
+
+  <div class="code-label"><span class="tag get">GET</span> read the agent back</div>
+  <div class="code"><span class="k">GET</span> <span class="u">{icore}/v2/integrations/usermapping?user_id=agent%40example.com</span>
+<span class="k">Authorization:</span> &lt;app token&gt;
+
+<span class="p">{</span> <span class="p">"Status"</span>: <span class="s">"Success"</span>, <span class="p">"Data"</span>: <span class="p">{</span>
+    <span class="p">"AppUserId"</span>:       <span class="s">"agent@example.com"</span>,
+    <span class="p">"ExotelUserId"</span>:    <span class="s">"&lt;hex id&gt;"</span>,
+    <span class="p">"VirtualNumber"</span>:   <span class="s">"&lt;your exophone&gt;"</span>,
+    <span class="p">"AgentNumber"</span>:     <span class="s">"+91…"</span>,          <span class="c">// normalised to E.164</span>
+<span class="hl">    <span class="p">"SipId"</span>:          <span class="s">"sip:&lt;generated&gt;"</span>,  <span class="c">// browser SIP username</span></span>    <span class="p">"SipSecret"</span>:      <span class="s">"&lt;never expose&gt;"</span>,
+<span class="hl">    <span class="p">"SipDeviceID"</span>:    <span class="s">"372299"</span>,           <span class="c">// the browser device</span></span><span class="hl">    <span class="p">"PhoneDeviceID"</span>:  <span class="s">"372298"</span>,           <span class="c">// created by AgentNumber</span></span><span class="hl">    <span class="p">"ActiveDeviceId"</span>: <span class="s">"372299"</span>,           <span class="c">// which one rings</span></span>    <span class="p">"OutboundActive"</span>: <span class="n">true</span>,
+    <span class="p">"IsActive"</span>:       <span class="n">true</span>
+<span class="p">} }</span></div>
+
+  <div class="note warn">
+    <div class="note-title">Verify ActiveDeviceId after setting AgentNumber</div>
+    <p>
+      Supplying <code>AgentNumber</code> causes Exotel to create a second
+      device, a phone device, alongside the browser's SIP device. Both exist,
+      but only <code>ActiveDeviceId</code> receives calls. Confirm that
+      <code>ActiveDeviceId</code> equals <code>SipDeviceID</code>, otherwise
+      calls will be delivered to a handset rather than the browser.
+    </p>
+  </div>
+
+  <h3><span class="sec">11</span>Step five: turn on recording</h3>
+
+  <p>
+    Recording is configured at the application level rather than per call. The
+    SDK's call payload is <code>{customer_id, app_id, to, user_id}</code>, which
+    has no field for it. Recording is a property of the application and applies
+    to every call that application places.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> enable recording for every call</div>
+  <div class="code"><span class="k">GET</span> <span class="u">{icore}/v2/integrations/app_setting</span>       <span class="c">// current value</span>
+<span class="p">{</span> <span class="p">"Data"</span>: <span class="p">[</span> <span class="p">{</span> <span class="p">"Key"</span>: <span class="s">"record"</span>, <span class="p">"Value"</span>: <span class="s">"false"</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+
+<span class="k">POST</span> <span class="u">{icore}/v2/integrations/app_setting</span>
+<span class="k">Authorization:</span> &lt;app token&gt;
+<span class="k">Content-Type:</span> application/json
+
+<span class="p">{</span> <span class="p">"Key"</span>: <span class="s">"record"</span>, <span class="p">"Value"</span>: <span class="s">"true"</span> <span class="p">}</span>
+
+<span class="c">// read it back to confirm</span>
+<span class="hl"><span class="p">{</span> <span class="p">"Key"</span>: <span class="s">"record"</span>, <span class="p">"Value"</span>: <span class="s">"true"</span> <span class="p">}</span></span></div>
+
+  <p>
+    Values are strings rather than booleans. Send <code>"true"</code>, not
+    <code>true</code>. Because the setting is application-wide, there is nothing
+    to specify at call time.
+  </p>
+
+  <h3><span class="sec">12</span>Step six: verification</h3>
+
+  <p>
+    Server-side failures are considerably easier to read than browser ones.
+    Confirm all four of the following from a terminal before opening the dialer,
+    because each maps to a specific browser symptom.
+  </p>
+
+  <table>
+    <caption>Pre-flight checks and the browser symptom each prevents</caption>
+    <thead><tr><th style="width:54mm">Check</th><th style="width:26mm">Expected</th><th>If it fails, the browser shows</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /token</code> with Entity app</td><td><span class="badge ok">Success</span></td><td>Token request rejected; nothing loads</td></tr>
+      <tr><td><code>GET /app</code></td><td><span class="badge ok">200</span></td><td>SDK initialise returns nothing, silently</td></tr>
+      <tr><td><code>GET /app_setting</code></td><td><span class="badge ok">200</span></td><td>SDK initialise aborts before SIP starts</td></tr>
+      <tr><td><code>GET /usermapping</code></td><td><span class="badge ok">Data present</span></td><td>SDK initialise returns nothing, silently</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note alarm">
+    <div class="note-title">The application settings check</div>
+    <p>
+      The SDK fetches application settings during initialisation and treats a
+      non-OK response as fatal. A freshly registered application that has never
+      had a setting written can return 404 here, and the SDK then aborts with
+      only a console warning, returning <code>undefined</code> rather than a
+      phone object. The visible symptom is a dialer that never connects, with no
+      on-screen error. Writing the recording setting in step five ensures this
+      endpoint returns data.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ PART IV ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part IV</div>
+    <h2>Browser integration</h2>
+    <p>SDK initialisation, SIP registration, and the outbound and inbound call flows.</p>
+  </div>
+
+  <h3><span class="sec">13</span>What the SDK does on initialisation</h3>
+
+  <p>
+    Your code calls two methods. Behind them the SDK makes three HTTP requests
+    and then opens a WebSocket. Knowing the order identifies which provisioning
+    step is at fault when initialisation fails.
+  </p>
+
+  <div class="code-label">Browser</div>
+  <div class="code"><span class="c">// token and userId are supplied by your own backend</span>
+<span class="k">const</span> sdk = <span class="k">new</span> ExotelCRMWebSDK(accessToken, userId, <span class="n">true</span>);
+
+<span class="c">// the third argument requests automatic device registration</span>
+<span class="k">const</span> webPhone = <span class="k">await</span> sdk.Initialize(
+  handleCallEvents,      <span class="c">// incoming, connected, callEnded, holdtoggle, mutetoggle</span>
+  handleRegistration,    <span class="c">// registered, unregistered, sent_request</span>
+  handleSession          <span class="c">// ICE state and media permission diagnostics</span>
+);
+
+<span class="hl"><span class="k">if</span> (!webPhone) <span class="p">{</span> <span class="c">/* provisioning is incomplete; check the console */</span> <span class="p">}</span></span></div>
+
+  <p>The three requests, in order:</p>
+
+  <ol>
+    <li><code>GET /v2/integrations/app</code> resolves which Exotel account the token belongs to.</li>
+    <li><code>GET /v2/integrations/app_setting</code> loads application settings. A 404 here is fatal.</li>
+    <li><code>GET /v2/integrations/usermapping?user_id=&lt;id&gt;</code> retrieves the agent, including SIP credentials.</li>
+  </ol>
+
+  <p>
+    The SDK then assembles the SIP account details from these responses. The SIP
+    domain is derived from the account SID, which defines the identity model:
+  </p>
+
+  <div class="code-label">Inside the SDK</div>
+  <div class="code">sipdomain: app.ExotelAccountSid + <span class="s">".voip.exotel.com"</span>
+userName:  userData.SipId.split(<span class="s">":"</span>)[<span class="n">1</span>]
+secret:    userData.SipSecret
+domain:    <span class="s">"voip.in1.exotel.com:443"</span>
+security:  <span class="s">"wss"</span></div>
+
+  <div class="note alarm">
+    <div class="note-title">Initialize returns undefined rather than throwing</div>
+    <p>
+      If any of the three requests fails, the SDK logs to the browser console
+      and returns <code>undefined</code>. It does not throw, so a
+      <code>try / catch</code> will not catch it. Always check the return value.
+      This behaviour accounts for most reports of an integration that fails with
+      no visible error.
+    </p>
+  </div>
+
+  <h3><span class="sec">14</span>SIP registration over WebSocket</h3>
+
+  <p>
+    With SIP details in hand, the SDK opens a secure WebSocket and performs a
+    standard SIP registration with digest authentication. The first REGISTER is
+    always rejected; this is the protocol operating correctly rather than an
+    error.
+  </p>
+
+  <div class="code-label"><span class="tag err">401</span> the expected challenge</div>
+  <div class="code">SIP/2.0 401 Unauthorized
+CSeq: 2 REGISTER
+<span class="hl">WWW-Authenticate: Digest realm="&lt;account&gt;.voip.exotel.com",</span><span class="hl">                  nonce="…", qop="auth"</span>Server: kamailio (5.7.0)</div>
+
+  <div class="code-label"><span class="tag res">200</span> registered</div>
+  <div class="code">REGISTER sip:&lt;account&gt;.voip.exotel.com SIP/2.0
+Authorization: Digest algorithm=MD5, username="&lt;sip id&gt;",
+               realm="&lt;account&gt;.voip.exotel.com", response="…",
+               qop=auth, nc=00000001
+Contact: &lt;sip:…;transport=wss&gt;;expires=300
+
+<span class="hl">SIP/2.0 200 OK</span></div>
+
+  <p>
+    The registration callback then fires with <code>"registered"</code>. The
+    registration lasts 300 seconds and the SDK refreshes it. Three states are
+    emitted in practice: <code>sent_request</code> while in flight,
+    <code>registered</code> on success, and <code>unregistered</code> on failure
+    or when the transport drops. Treat <code>unregistered</code> as temporary
+    and re-register rather than tearing down the session.
+  </p>
+
+  <h3><span class="sec">15</span>Placing an outbound call</h3>
+
+  <p class="lede">
+    Exotel places outgoing calls on your behalf rather than dialling directly
+    from the browser. This section describes that flow and the handling it
+    requires.
+  </p>
+
+  <p>
+    <code>webPhone.MakeCall(number, callback)</code> asks Exotel to place a
+    call. Exotel then brings you into it by sending a SIP INVITE to the browser
+    you registered earlier, and joins that leg to the customer. An outgoing call
+    therefore arrives back at your event handler as an <code>"incoming"</code>
+    event.
+  </p>
+
+  <p>
+    This design has two practical advantages. Because Exotel originates both
+    legs, caller ID, routing, recording, billing and call detail records are
+    managed centrally, and the browser requires no knowledge of the telephone
+    network. It also means a single event path handles both inbound and outbound
+    calls, so media is connected in one place in your application. The
+    requirement it places on your code is to answer the leg Exotel offers.
+  </p>
+
+  <div class="code-label"><span class="tag post">POST</span> the request MakeCall issues</div>
+  <div class="code"><span class="k">POST</span> <span class="u">{icore}/v2/integrations/call/outbound_call</span>
+<span class="k">Authorization:</span> &lt;app token&gt;
+<span class="k">Content-Type:</span> application/json
+
+<span class="p">{</span>
+  <span class="p">"customer_id"</span>: <span class="s">"&lt;customer id&gt;"</span>,
+  <span class="p">"app_id"</span>:      <span class="s">"&lt;app id&gt;"</span>,
+  <span class="p">"to"</span>:          <span class="s">"&lt;number to dial&gt;"</span>,
+  <span class="p">"user_id"</span>:     <span class="s">"agent@example.com"</span>
+<span class="p">}</span>
+<span class="c">// no field for caller ID, and none for recording</span></div>
+
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="Outbound call sequence showing Exotel sending an INVITE back to the browser, which must be answered">
+      <defs>
+        <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="80" y="20" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11.5" font-weight="700" fill="currentColor">Browser</text>
+      <text x="360" y="20" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11.5" font-weight="700" fill="currentColor">Exotel</text>
+      <text x="648" y="20" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11.5" font-weight="700" fill="currentColor">Customer</text>
+      <line x1="80" y1="30" x2="80" y2="282" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="360" y1="30" x2="360" y2="282" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="648" y1="30" x2="648" y2="282" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+      <g font-family="IBM Plex Mono, monospace" font-size="9.5">
+        <line x1="80" y1="56" x2="356" y2="56" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah3)" color="#2a5aa8"/>
+        <text x="218" y="50" text-anchor="middle" fill="#2a5aa8">POST /call/outbound_call</text>
+        <line x1="360" y1="84" x2="84" y2="84" stroke="#0d7f63" stroke-width="1.4" marker-end="url(#ah3)" color="#0d7f63"/>
+        <text x="218" y="78" text-anchor="middle" fill="#0d7f63">200  CallSid</text>
+        <rect x="86" y="98" width="270" height="34" fill="#eaf0fa" stroke="#2a5aa8" stroke-width="1"/>
+        <line x1="360" y1="115" x2="90" y2="115" stroke="#2a5aa8" stroke-width="2" marker-end="url(#ah3)" color="#2a5aa8"/>
+        <text x="222" y="111" text-anchor="middle" fill="#2a5aa8" font-weight="600">SIP INVITE  to the browser</text>
+        <text x="222" y="126" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#2a5aa8">arrives as an "incoming" event</text>
+        <line x1="80" y1="150" x2="356" y2="150" stroke="#0d7f63" stroke-width="1.8" marker-end="url(#ah3)" color="#0d7f63"/>
+        <text x="218" y="144" text-anchor="middle" fill="#0d7f63" font-weight="600">200 OK   answer this leg</text>
+        <line x1="360" y1="182" x2="644" y2="182" stroke="#2a5aa8" stroke-width="1.4" marker-end="url(#ah3)" color="#2a5aa8"/>
+        <text x="502" y="176" text-anchor="middle" fill="#2a5aa8">PSTN call placed</text>
+        <line x1="648" y1="210" x2="364" y2="210" stroke="#0d7f63" stroke-width="1.4" marker-end="url(#ah3)" color="#0d7f63"/>
+        <text x="502" y="204" text-anchor="middle" fill="#0d7f63">answered</text>
+        <line x1="80" y1="250" x2="644" y2="250" stroke="#0d7f63" stroke-width="2.2" color="#0d7f63"/>
+        <text x="360" y="243" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="11" font-weight="700" fill="#0d7f63">two way audio</text>
+        <text x="360" y="272" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="9.5" fill="#6b7c93">Between the 200 OK and the customer answering, the agent hears ringback.</text>
+      </g>
+    </svg>
+    <figcaption>
+      <b>Figure 3.</b> The complete outbound call sequence. The highlighted
+      arrow is the leg that requires handling: Exotel invites the browser into
+      the call the agent requested. Answering it automatically presents the
+      agent with a normal outgoing call.
+    </figcaption>
+  </figure>
+
+  <div class="code-label">Handling the return leg</div>
+  <div class="code"><span class="k">function</span> dial(number) <span class="p">{</span>
+<span class="hl">  state.pendingOutbound = <span class="n">true</span>;   <span class="c">// set BEFORE calling</span></span>  webPhone.MakeCall(number, (status, response) =&gt; <span class="p">{</span>
+    <span class="k">if</span> (status === <span class="s">"success"</span>) log(response.Data.CallSid);
+  <span class="p">}</span>);
+<span class="p">}</span>
+
+<span class="k">function</span> handleCallEvents(event, data) <span class="p">{</span>
+  <span class="k">if</span> (event === <span class="s">"incoming"</span>) <span class="p">{</span>
+<span class="hl">    <span class="k">if</span> (state.pendingOutbound) <span class="p">{</span>      <span class="c">// our own call returning</span></span><span class="hl">      webPhone.AcceptCall();            <span class="c">// answer without prompting</span></span>      <span class="k">return</span>;
+    <span class="p">}</span>
+    showIncomingPopup(data.callFromNumber);   <span class="c">// a genuine inbound call</span>
+  <span class="p">}</span>
+<span class="p">}</span></div>
+
+  <p>
+    Set the flag before calling <code>MakeCall</code> rather than inside its
+    success callback. The INVITE can reach the browser before the HTTP response
+    does, and if the flag is not yet set an incoming call prompt will be shown
+    in error.
+  </p>
+
+  <div class="note">
+    <div class="note-title">Handling a cancelled dial</div>
+    <p>
+      If the agent hangs up while still dialling there is no SIP session to end,
+      so <code>HangupCall</code> has no effect and Exotel's INVITE may still
+      arrive seconds later. Record a short-lived cancellation timestamp and
+      decline any INVITE arriving within that window, otherwise a cancelled call
+      reappears as an unexpected inbound ring.
+    </p>
+  </div>
+
+  <h3><span class="sec">16</span>Receiving an inbound call</h3>
+
+  <p>
+    An inbound call involves no HTTP request. A customer dials the ExoPhone, the
+    dashboard flow routes the call to the VoIP agent, and Exotel sends an INVITE
+    to whichever browser currently holds the registration. The
+    <code>"incoming"</code> handler fires with the caller's number in
+    <code>callFromNumber</code>. Ring, display a prompt, and call
+    <code>AcceptCall()</code> to answer.
+  </p>
+
+  <p>
+    The INVITE carries headers the SDK stores, including
+    <code>X-Exotel-Callsid</code>, which is the CallSid used to retrieve the
+    call record later.
+  </p>
+
+  <div class="note warn">
+    <div class="note-title">One agent means one registration</div>
+    <p>
+      An agent is a single SIP identity, and a SIP identity holds one
+      registration. Opening the same agent in two browsers registers the same
+      identity twice, and Exotel rings whichever registered most recently. The
+      resulting failure is difficult to diagnose: calls are delivered to an
+      unattended machine while the intended agent, whose dialer reports a
+      healthy registration, receives nothing. Provision one agent per seat.
+    </p>
+  </div>
+
+  <h3><span class="sec">17</span>Microphone access and browser policy</h3>
+
+  <p>Three browser rules apply, none of which can be overridden from your code.</p>
+
+  <h4>Secure origin</h4>
+  <p>
+    <code>getUserMedia</code> is unavailable outside a secure context, meaning
+    <code>https://</code> or <code>localhost</code>, which browsers treat as
+    secure by exception. Serving the dialer over plain HTTP on a LAN address
+    provides no microphone at all, and the failure presents as a broken
+    application rather than a policy decision.
+  </p>
+
+  <h4>Permission requires a user gesture</h4>
+  <p>
+    Browsers present the microphone prompt in response to a user action. Request
+    it deliberately, from a button, rather than allowing the SDK to trigger it
+    during the first call. Query the current state first so the prompt can be
+    skipped when permission is already granted:
+  </p>
+
+  <div class="code-label">Requesting microphone access</div>
+  <div class="code"><span class="k">const</span> perm = <span class="k">await</span> navigator.permissions.query(<span class="p">{</span> name: <span class="s">"microphone"</span> <span class="p">}</span>);
+
+<span class="k">if</span> (perm.state === <span class="s">"granted"</span>) <span class="p">{</span> <span class="c">/* open and release, silently */</span> <span class="p">}</span>
+<span class="k">if</span> (perm.state === <span class="s">"prompt"</span>)  <span class="p">{</span> <span class="c">/* present your own button first */</span> <span class="p">}</span>
+<span class="k">if</span> (perm.state === <span class="s">"denied"</span>)  <span class="p">{</span> <span class="c">/* explain the padlock icon */</span> <span class="p">}</span></div>
+
+  <p>
+    On macOS a second gate applies above the browser: the browser itself must be
+    permitted microphone access in System Settings, under Privacy and Security.
+    If the operating system is blocking it, the browser's own prompt does not
+    appear and the page reports that permission was denied.
+  </p>
+
+  <h4>Audio playback requires the same gesture</h4>
+  <p>
+    The gesture that grants the microphone also unlocks audio playback. An
+    <code>AudioContext</code> created at page load starts suspended, leaving
+    ringtones silent. Create or resume it within the permission click. The SDK
+    plays its own ringtone files on detached audio elements, which are subject
+    to the same policy.
+  </p>
+</section>
+
+<!-- ============================ PART V ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part V</div>
+    <h2>Operations</h2>
+    <p>Call recording, call detail records, and production deployment requirements.</p>
+  </div>
+
+  <h3><span class="sec">18</span>Call recording</h3>
+
+  <p>
+    The mechanism is covered in section 11. Three operational points are worth
+    stating separately.
+  </p>
+
+  <p>
+    First, recording is all or nothing per application. If recording is required
+    on some calls but not others, two applications are needed, and each agent
+    belongs to one application. Second, the setting takes effect immediately for
+    calls placed after it is written and does not apply retroactively. Third,
+    recordings are available against the call in the Exotel dashboard and
+    through the call detail record described next.
+  </p>
+
+  <div class="note warn">
+    <div class="note-title">Recording and consent</div>
+    <p>
+      Jurisdictions differ on whether one party or all parties must consent to a
+      recorded call. Because this setting is account-wide and silent, nothing in
+      the product informs an agent that a call is being recorded. If an
+      announcement or consent prompt is required, it belongs in your call flow
+      or agent script, and is worth deciding before enabling recording.
+    </p>
+  </div>
+
+  <h3><span class="sec">19</span>Reading call detail records</h3>
+
+  <p>
+    The Voice API returns the authoritative record of what occurred. It is the
+    fastest way to establish whether a problem lies in the browser or on the
+    network, because it shows what the platform recorded.
+  </p>
+
+  <div class="code-label"><span class="tag get">GET</span> a call record</div>
+  <div class="code"><span class="k">GET</span> <span class="u">https://api.in.exotel.com/v1/Accounts/&lt;sid&gt;/Calls/&lt;CallSid&gt;.json</span>
+<span class="k">Authorization:</span> Basic base64(API_KEY:API_TOKEN)
+
+<span class="p">{</span> <span class="p">"Call"</span>: <span class="p">{</span>
+    <span class="p">"Sid"</span>:            <span class="s">"&lt;CallSid&gt;"</span>,
+<span class="hl">    <span class="p">"From"</span>:           <span class="s">"sip:&lt;sip id&gt;"</span>,      <span class="c">// the browser leg</span></span>    <span class="p">"To"</span>:             <span class="s">"&lt;customer number&gt;"</span>,
+    <span class="p">"PhoneNumberSid"</span>: <span class="s">"&lt;exophone&gt;"</span>,       <span class="c">// caller ID presented</span>
+    <span class="p">"Status"</span>:         <span class="s">"completed"</span>,
+    <span class="p">"Duration"</span>:       <span class="n">19</span>,
+    <span class="p">"Direction"</span>:      <span class="s">"outbound-dial"</span>
+<span class="p">} }</span></div>
+
+  <p>
+    A <code>From</code> value beginning <code>sip:</code> confirms that the call
+    originated from a browser rather than a handset, which is a quick way to
+    confirm that the WebRTC path was used.
+  </p>
+
+  <div class="note alarm">
+    <div class="note-title">Do not put credentials in the URL</div>
+    <p>
+      Documentation often shows Voice API calls in the form
+      <code>https://key:token@api.in.exotel.com/...</code>. Modern HTTP clients
+      reject this. Node's built-in <code>fetch</code> throws outright: <em>
+      "Request cannot be constructed from a URL that includes credentials."</em>
+      Use an <code>Authorization: Basic</code> header instead. Worth checking
+      early: the request never reaches Exotel, so there is nothing on the
+      platform side to inspect.
+    </p>
+  </div>
+
+  <h3><span class="sec">20</span>Production deployment</h3>
+
+  <h4>HTTPS is required</h4>
+  <p>
+    Because <code>getUserMedia</code> requires a secure context, HTTPS is
+    required as soon as the dialer is used from a machine other than the one
+    running the server. Any platform that terminates TLS is suitable. When
+    deploying behind a proxy, configure the framework to trust it, otherwise the
+    request is reported as insecure and cookies marked Secure are never set.
+  </p>
+
+  <h4>Protect the token endpoint</h4>
+  <p>
+    An endpoint that mints application tokens is functionally an endpoint that
+    permits the caller to place calls billed to your account and to read your
+    agents' SIP credentials. On localhost the exposure is limited to the local
+    machine; on a public URL it extends to anyone who can reach it. Place
+    authentication in front of this endpoint before the first deployment.
+  </p>
+
+  <div class="note good">
+    <div class="note-title">Recommended minimum</div>
+    <p>
+      A shared password, a signed session cookie with an expiry, constant-time
+      comparison, and per-address backoff on failed attempts is sufficient for a
+      small internal tool and takes well under an hour. Leave the status
+      callback route open, since the platform posts to it and it carries no
+      secrets.
+    </p>
+  </div>
+
+  <h4>Run provisioning locally</h4>
+  <p>
+    Provisioning writes the application credentials back into your environment
+    file. A deployed container's filesystem is discarded on redeploy, so run
+    provisioning from a workstation and copy the resulting values into your
+    platform's environment variables.
+  </p>
+</section>
+
+<!-- ============================ PART VI ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Part VI</div>
+    <h2>Implementation notes</h2>
+    <p>Five implementation details, each with the observed behaviour, its cause, and the recommended handling.</p>
+  </div>
+
+  <h3><span class="sec">21</span>Five implementation considerations</h3>
+
+  <div class="item">
+    <div class="item-head"><span class="no">01</span> Outgoing calls appear as incoming calls</div>
+    <div class="item-body">
+      <div class="item-row symptom"><span class="lbl">Observed</span><span class="val">The agent dials a number and immediately receives an incoming call prompt for it.</span></div>
+      <div class="item-row"><span class="lbl">Cause</span><span class="val"><code>MakeCall</code> asks Exotel to place the call. Exotel then sends a SIP INVITE to the browser, which surfaces as an <code>"incoming"</code> event.</span></div>
+      <div class="item-row fix"><span class="lbl">Handling</span><span class="val">Track a <code>pendingOutbound</code> flag, set before calling <code>MakeCall</code>, and answer the matching INVITE automatically. See section 15.</span></div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="no">02</span> Call failures report only the word "Error"</div>
+    <div class="item-body">
+      <div class="item-row symptom"><span class="lbl">Observed</span><span class="val">All failures present as the literal string <code>Error</code>, with no reason shown in the interface.</span></div>
+      <div class="item-row"><span class="lbl">Cause</span><span class="val">The SDK reports failures as <code>new Error(response.statusText)</code>. The API is served over HTTP/2, where <code>statusText</code> is always an empty string. The reason is in the response body, which the SDK discards.</span></div>
+      <div class="item-row fix"><span class="lbl">Handling</span><span class="val">Wrap <code>window.fetch</code>, and on a failed request to <code>/call/outbound_call</code> read the cloned body and extract <code>error_data.description</code>.</span></div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="no">03</span> A plus sign in the agent email prevents initialisation</div>
+    <div class="item-body">
+      <div class="item-row symptom"><span class="lbl">Observed</span><span class="val">An agent such as <code>name+webrtc@gmail.com</code> provisions correctly on the server but the SDK never initialises.</span></div>
+      <div class="item-row"><span class="lbl">Cause</span><span class="val">The SDK interpolates the user id into a query string without encoding it. In a query string <code>+</code> denotes a space, so the lookup is performed for <code>name webrtc@gmail.com</code>, returns 404, and initialisation aborts.</span></div>
+      <div class="item-row fix"><span class="lbl">Handling</span><span class="val">Pass <code>encodeURIComponent(userId)</code> into the SDK constructor. That value is used only to build this URL; the SDK builds its user object from the response. The raw form returns 404; the encoded form returns 200.</span></div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="no">04</span> Setting an agent phone number diverts calls to a handset</div>
+    <div class="item-body">
+      <div class="item-row symptom"><span class="lbl">Observed</span><span class="val">After adding <code>AgentNumber</code>, calls ring a mobile rather than the browser.</span></div>
+      <div class="item-row"><span class="lbl">Cause</span><span class="val">Exotel creates a second device, a phone device, and <code>ActiveDeviceId</code> determines which one rings.</span></div>
+      <div class="item-row fix"><span class="lbl">Handling</span><span class="val">After provisioning, assert <code>ActiveDeviceId === SipDeviceID</code>. Leave <code>AgentNumber</code> empty for browser-only agents.</span></div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="no">05</span> Account identity is determined by the token</div>
+    <div class="item-body">
+      <div class="item-row symptom"><span class="lbl">Observed</span><span class="val">A request configured for one account resolves to a different account name.</span></div>
+      <div class="item-row"><span class="lbl">Cause</span><span class="val">The SDK derives the account entirely from <code>GET /v2/integrations/app</code>, which reflects the token. The <code>ExotelAccountSid</code> sent in provisioning bodies is not checked against it, and the SIP realm is built from whatever the token resolved to.</span></div>
+      <div class="item-row fix"><span class="lbl">Handling</span><span class="val">After minting a token, call <code>GET /app</code>, read the authoritative <code>ExotelAccountSid</code>, and reject the request if it is not the expected account. Treat any account SID supplied by a client as untrusted input.</span></div>
+    </div>
+  </div>
+
+  <div class="note good">
+    <div class="note-title">Account level issues</div>
+    <p>
+      The five items above are handled within your own application. Anything
+      that resides on the account rather than in code, including WebRTC
+      enablement, balance and billing, number provisioning, and how an ExoPhone
+      routes an inbound call, is resolved more quickly with Exotel than inferred
+      from an error message. Contact your Exotel representative with your
+      Account SID and, where relevant, the CallSid.
+    </p>
+    <p>
+      A useful rule while debugging: if SIP registration is healthy and the
+      failure appears only at call time, examine the account before the code.
+    </p>
+  </div>
+
+  <h3><span class="sec">22</span>Error reference</h3>
+
+  <table>
+    <caption>Errors observed on a live account, and their meaning</caption>
+    <thead><tr><th style="width:20mm">Code</th><th style="width:56mm">Message</th><th>Meaning and action</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge err">403</span></td>
+        <td>This is a trial account. Operation not permitted.</td>
+        <td>Agent creation is enabled by Exotel. Contact your Exotel representative for IP&ndash;PSTN WebRTC enablement.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">402</span></td>
+        <td>Insufficient balance to make a call. <span class="t-num">(10720)</span></td>
+        <td>Nothing is wrong with the integration. Top up the account, or ask Exotel support to confirm the billing state.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">404</span></td>
+        <td>record not found</td>
+        <td>User mapping lookup failed. Either the agent is not provisioned, or the id was not URL encoded. See item three.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">404</span></td>
+        <td>No matching results</td>
+        <td>The Voice API could not find that CallSid, usually a typo. This response also confirms that authentication succeeded.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">401</span></td>
+        <td>SIP/2.0 401 Unauthorized</td>
+        <td>Not an error. The expected digest challenge during SIP registration, followed by a second REGISTER.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">n/a</span></td>
+        <td><code>Initialize()</code> returned undefined</td>
+        <td>One of the three initialisation requests failed. Check the console, then repeat the four pre-flight checks in section 12.</td>
+      </tr>
+      <tr>
+        <td><span class="badge err">n/a</span></td>
+        <td>Request cannot be constructed from a URL that includes credentials</td>
+        <td>The HTTP client is rejecting credentials in a URL. Move them to an Authorization header, as in section 19.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3><span class="sec">23</span>Verification checklist</h3>
+
+  <p>
+    Work down the list. Each item depends on those above it, so the first
+    failure is the actual problem and everything below it is consequential.
+  </p>
+
+  <ul class="checklist">
+    <li><span class="box"></span><span><b>Client ID and Secret obtained.</b> Through the credential portal, section 5.2</span></li>
+    <li><span class="box"></span><span><b>Account is Full, active, KYC complete.</b> <code>GET /v1/Accounts/&lt;sid&gt;.json</code></span></li>
+    <li><span class="box"></span><span><b>Account has balance.</b> Prepaid accounts fail at call time only</span></li>
+    <li><span class="box"></span><span><b>Customer token mints.</b> <code>POST /token</code> with <code>Entity: customer</code></span></li>
+    <li><span class="box"></span><span><b>Application exists.</b> <code>GET /app</code> returns the expected AppID and account SID</span></li>
+    <li><span class="box"></span><span><b>App token mints.</b> <code>POST /token</code> with <code>Entity: app</code></span></li>
+    <li><span class="box"></span><span><b>Settings endpoint answers.</b> <code>GET /app_setting</code> returns 200, not 404</span></li>
+    <li><span class="box"></span><span><b>Recording is enabled.</b> <code>record</code> is the string <code>"true"</code></span></li>
+    <li><span class="box"></span><span><b>Agent exists.</b> <code>GET /usermapping</code> returns Data, with the id URL encoded</span></li>
+    <li><span class="box"></span><span><b>Browser is the active device.</b> <code>ActiveDeviceId === SipDeviceID</code></span></li>
+    <li><span class="box"></span><span><b>Page is on a secure origin.</b> HTTPS, or localhost</span></li>
+    <li><span class="box"></span><span><b>Microphone granted.</b> And on macOS, granted to the browser by the OS</span></li>
+    <li><span class="box"></span><span><b>SIP registers.</b> REGISTER, 401, REGISTER, 200 OK</span></li>
+    <li><span class="box"></span><span><b>Outgoing call connects.</b> And the return INVITE is answered automatically</span></li>
+    <li><span class="box"></span><span><b>Call record confirms it.</b> <code>From</code> begins with <code>sip:</code></span></li>
+    <li><span class="box"></span><span><b>Inbound flow configured.</b> Dashboard, ExoPhone to VoIP agent</span></li>
+    <li><span class="box"></span><span><b>Token endpoint authenticated.</b> Before the first public deployment</span></li>
+  </ul>
+</section>
+
+<!-- ============================ APPENDIX ============================ -->
+<section class="part">
+  <div class="part-head">
+    <div class="part-num">Appendices</div>
+    <h2>Reference</h2>
+    <p>Consolidated endpoint reference and glossary.</p>
+  </div>
+
+  <h3><span class="sec">A</span>Endpoint reference</h3>
+
+  <p>
+    <code>{icore}</code> denotes the regional integrations host. The Voice API
+    base is <code>https://api.in.exotel.com</code>. Region strings differ for
+    other Exotel regions.
+  </p>
+
+  <table>
+    <caption>iCore integrations</caption>
+    <thead><tr><th style="width:16mm">Method</th><th style="width:48mm">Path</th><th style="width:22mm">Auth</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge post">POST</span></td><td><code>/v2/integrations/token</code></td><td>none</td><td>Mint a JWT. The body selects customer or app entity.</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td><code>/v2/integrations/app</code></td><td>customer</td><td>Register an application. Returns AppID and AppSecret.</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td><code>/v2/integrations/app</code></td><td>app</td><td>Resolve which account the token belongs to.</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td><code>/v2/integrations/usermapping</code></td><td>app</td><td>Create agents. The body is an array.</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td><code>/v2/integrations/usermapping?user_id=</code></td><td>app</td><td>Read an agent. URL encode the id.</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td><code>/v2/integrations/app_setting</code></td><td>app</td><td>Read application settings.</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td><code>/v2/integrations/app_setting</code></td><td>app</td><td>Write one setting as a Key and Value pair.</td></tr>
+      <tr><td><span class="badge post">POST</span></td><td><code>/v2/integrations/call/outbound_call</code></td><td>app</td><td>Place a call. Exotel then invites the browser.</td></tr>
+    </tbody>
+  </table>
+
+  <table>
+    <caption>Voice API v1, HTTP Basic auth</caption>
+    <thead><tr><th style="width:16mm">Method</th><th style="width:48mm">Path</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge get">GET</span></td><td><code>/v1/Accounts/&lt;sid&gt;.json</code></td><td>Account type, status, billing type, KYC status.</td></tr>
+      <tr><td><span class="badge get">GET</span></td><td><code>/v1/Accounts/&lt;sid&gt;/Calls/&lt;CallSid&gt;.json</code></td><td>Call detail record: status, duration, direction, price.</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="sec">B</span>Glossary</h3>
+
+  <dl class="kv">
+    <dt>API</dt><dd>A defined way for two systems to communicate, so one program can ask another to perform an action.</dd>
+    <dt>Token</dt><dd>A temporary credential. Rather than sending a password with every request, it is exchanged once for a token that expires.</dd>
+    <dt>Provisioning</dt><dd>Configuring an account so it is ready for use. Here, registering a person as permitted to make calls from a browser.</dd>
+    <dt>Agent</dt><dd>The person making or receiving calls, and the record representing them in Exotel.</dd>
+    <dt>ExoPhone</dt><dd>The business telephone number provided by Exotel. Customers see it and can dial it.</dd>
+    <dt>Registration</dt><dd>The browser informing Exotel that it is present and ready to receive calls. If it lapses, calls cannot be delivered.</dd>
+    <dt>Inbound and outbound</dt><dd>Calls arriving from customers, and calls placed to them.</dd>
+    <dt>Prepaid balance</dt><dd>Funds loaded onto the Exotel account in advance. When exhausted, calls stop.</dd>
+    <dt>HTTPS</dt><dd>The secure form of a web address. Browsers do not grant microphone access to pages that are not served over it.</dd>
+  </dl>
+
+  <div class="footnote">
+    Every request and response body in this document was captured from a live
+    Exotel account during a working integration. Secrets, SIP passwords,
+    application secrets and account identifiers have been replaced with
+    placeholders.
+  </div>
+</section>
+
+</body>
+</html>

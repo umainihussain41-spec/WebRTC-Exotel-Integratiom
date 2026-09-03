@@ -8,7 +8,8 @@
     "start": "node server.js",
     "dev": "node server.js",
     "provision": "node provision.js",
-    "postinstall": "node build-sdk.js"
+    "postinstall": "node build-sdk.js",
+    "codes": "node scripts/issue-codes.js"
   },
   "license": "Apache-2.0",
   "dependencies": {

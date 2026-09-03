@@ -574,7 +574,7 @@ figcaption b{ color:var(--ink); font-weight:700; }
       </tr>
       <tr>
         <td><code>Client ID</code><br /><code>Client Secret</code></td>
-        <td><b>Sent to you as a sealed file</b> by your Exotel representative, with a separate passphrase. See section 5.2.</td>
+        <td><b>Sent to you by your Exotel representative</b> as a one page document. See section 5.2.</td>
       </tr>
       <tr>
         <td><code>App ID</code><br /><code>App Secret</code></td>
@@ -587,18 +587,12 @@ figcaption b{ color:var(--ink); font-weight:700; }
     </tbody>
   </table>
 
-  <h4>5.2 Opening your sealed credential file</h4>
+  <h4>5.2 Receiving your Client ID and Client Secret</h4>
 
   <p>
-    Your Client ID and Client Secret are issued by Exotel and sent to you as a
-    sealed file, with a passphrase sent separately.
+    These are issued by Exotel and sent to you as a one page document. Open it
+    and copy both values across.
   </p>
-
-  <ol class="steps">
-    <li>Open the file. Double clicking is enough; it opens in your browser.</li>
-    <li>Enter the passphrase and select <strong>Unseal</strong>.</li>
-    <li>Copy the Client ID and Client Secret into your environment file.</li>
-  </ol>
 
   <p>
     Store them as <code>EXOTEL_CLIENT_ID</code> and
@@ -611,8 +605,9 @@ figcaption b{ color:var(--ink); font-weight:700; }
   <div class="note alarm">
     <div class="note-title">Credentials are generated once per account</div>
     <p>
-      A sealed file is produced a single time for each Exotel account. Keep both
-      the file and the passphrase: together they are the only copy.
+      They are produced a single time for each Exotel account. Keep the document
+      somewhere durable and treat it as a password: anyone holding the pair can
+      place calls billed to your account.
     </p>
   </div>
 
@@ -620,9 +615,9 @@ figcaption b{ color:var(--ink); font-weight:700; }
 
   <p>
     Email <code>hello@exotel.in</code> using the template below. Use it for a
-    reissue, and equally if the passphrase is not accepted, the file has been
-    lost, or anything else here is not behaving as described. Generation happens
-    at Exotel's end, so these need a request rather than a retry.
+    reissue, and equally if the document has been lost or anything else here is
+    not behaving as described. Generation happens at Exotel's end, so these need
+    a request rather than a retry.
   </p>
 
   <div class="code-label">Email template &middot; to hello@exotel.in</div>
@@ -635,8 +630,7 @@ We are integrating the Exotel IP-PSTN WebRTC WebSDK into our application.
 
 <span class="k">Please could you help with the following:</span>
 <span class="k">  [ ] Reissue our Client ID and Client Secret</span>
-<span class="k">  [ ] The passphrase does not open the sealed file</span>
-<span class="k">  [ ] We no longer have the file or the passphrase</span>
+<span class="k">  [ ] We no longer have the document containing them</span>
 <span class="k">  [ ] Confirm this account is enabled for IP-PSTN WebRTC</span>
 
   Account SID      : <span class="s">&lt;your account sid&gt;</span>
@@ -1494,7 +1488,7 @@ Contact: &lt;sip:…;transport=wss&gt;;expires=300
   </p>
 
   <ul class="checklist">
-    <li><span class="box"></span><span><b>Client ID and Secret obtained.</b> Sealed file opened with its passphrase, section 5.2</span></li>
+    <li><span class="box"></span><span><b>Client ID and Secret obtained.</b> From the document sent by Exotel, section 5.2</span></li>
     <li><span class="box"></span><span><b>Account is Full, active, KYC complete.</b> <code>GET /v1/Accounts/&lt;sid&gt;.json</code></span></li>
     <li><span class="box"></span><span><b>Account has balance.</b> Prepaid accounts fail at call time only</span></li>
     <li><span class="box"></span><span><b>Customer token mints.</b> <code>POST /token</code> with <code>Entity: customer</code></span></li>

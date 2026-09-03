@@ -11,7 +11,8 @@
     "postinstall": "node build-sdk.js",
     "codes": "node scripts/issue-codes.js",
     "cred-package": "node scripts/make-cred-package.js",
-    "cred-pdf": "node scripts/make-cred-package.js --format pdf"
+    "cred-pdf": "node scripts/make-cred-package.js --format pdf",
+    "generator": "node scripts/make-generator.js"
   },
   "license": "Apache-2.0",
   "dependencies": {

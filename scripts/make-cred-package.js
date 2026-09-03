@@ -28,6 +28,21 @@ const crypto = require("crypto");
 const PBKDF2_ITERATIONS = 310000;
 const OUT_DIR = path.join(__dirname, "..", "out");
 
+// One generation per account, enforced here because this is the only place it
+// can be enforced. The customer's copy cannot mint anything, so the rule has to
+// live on the side that actually makes the provisioning call. Re-running would
+// also risk creating a duplicate customer record upstream.
+const LEDGER = process.env.CRED_LEDGER_PATH || path.join(__dirname, "..", "data", "sealed-packages.json");
+
+function ledgerRead() {
+  try { return JSON.parse(fs.readFileSync(LEDGER, "utf8")); }
+  catch (e) { return { issued: {} }; }
+}
+function ledgerWrite(db) {
+  fs.mkdirSync(path.dirname(LEDGER), { recursive: true });
+  fs.writeFileSync(LEDGER, JSON.stringify(db, null, 2));
+}
+
 // ---- arguments -------------------------------------------------------------
 const args = {};
 process.argv.slice(2).forEach((a, i, all) => {
@@ -299,6 +314,37 @@ document.addEventListener("click", async (e) => {
 // ---- run -------------------------------------------------------------------
 (async () => {
   try {
+    const ledger = ledgerRead();
+    const key = sid.toLowerCase();
+    const prior = ledger.issued[key];
+
+    if (args.list) {
+      const rows = Object.entries(ledger.issued);
+      console.log(`\n  Sealed packages issued: ${rows.length}\n`);
+      for (const [s, r] of rows) {
+        console.log(`  ${s.padEnd(20)} ${r.at}   client id ${r.clientId}${r.regenerated ? `   regenerated x${r.regenerated}` : ""}`);
+      }
+      console.log("");
+      return;
+    }
+
+    if (prior && !args.force) {
+      console.error(
+        `\n  Refusing: a sealed package was already issued for ${sid}.\n` +
+        `    when      : ${prior.at}\n` +
+        `    client id : ${prior.clientId}\n\n` +
+        `  Credentials are issued once per account. If the customer has lost them or\n` +
+        `  needs a genuine reissue, that is a support decision, not a routine re-run.\n` +
+        `  Override deliberately with --force once you have decided.\n`
+      );
+      process.exitCode = 1;
+      return;
+    }
+    if (prior && args.force) {
+      console.log(`\n  --force: re-issuing for ${sid}, previously issued ${prior.at}.`);
+      console.log(`  This may create a second customer record upstream.\n`);
+    }
+
     const creds = await getCredentials();
     const pass = passphrase();
     const sealed = seal(JSON.stringify({
@@ -311,6 +357,16 @@ document.addEventListener("click", async (e) => {
     fs.mkdirSync(OUT_DIR, { recursive: true });
     const file = path.join(OUT_DIR, `${sid}-exotel-credentials.html`);
     fs.writeFileSync(file, buildPage(sealed, sid));
+
+    // Record the issue. The secret is never written here, only the client id,
+    // so the ledger says who was served without holding anything sensitive.
+    ledger.issued[key] = {
+      at: new Date().toISOString(),
+      clientId: creds.clientId,
+      source: creds.source,
+      regenerated: prior ? (prior.regenerated || 0) + 1 : 0,
+    };
+    ledgerWrite(ledger);
 
     console.log(`\n  Sealed credential file written`);
     console.log(`  ------------------------------`);

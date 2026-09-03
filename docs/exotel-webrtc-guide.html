@@ -208,7 +208,7 @@ figcaption b{ color:var(--ink); font-weight:700; }
   <div class="cover-rule thin"></div>
   <div class="cover-top">
     <div class="cover-eyebrow">Implementation Guide &middot; IP&ndash;PSTN WebRTC</div>
-    <h1>Browser Calling<br />with Exotel<br /><em>provisioning to live call</em></h1>
+    <h1>Browser Calling<br />with Exotel<br /><em>from zero to a live call</em></h1>
     <p class="cover-sub">
       Account requirements, the complete API surface, exact request and response
       bodies, and the implementation details required for a working integration.
@@ -227,7 +227,7 @@ figcaption b{ color:var(--ink); font-weight:700; }
   </div>
 
   <dl class="cover-meta">
-    <div><dt>Document type</dt><dd>Engineering implementation guide</dd></div>
+    <div><dt>Document type</dt><dd>Engineering guide and field report</dd></div>
     <div><dt>Audience</dt><dd>Engineers, with plain-language notes throughout</dd></div>
     <div><dt>Platform</dt><dd>Exotel IP&ndash;PSTN WebRTC, Mumbai region</dd></div>
     <div><dt>SDK</dt><dd><code>@exotel-npm-dev/exotel-ip-calling-crm-websdk</code> 1.2.2</dd></div>
@@ -493,7 +493,7 @@ figcaption b{ color:var(--ink); font-weight:700; }
     balance first, or ask Exotel support to confirm the account state.
   </p>
 
-  <h4>4.3 An ExoPhone is required</h4>
+  <h4>4.3 You need an ExoPhone</h4>
 
   <p>
     The virtual number serves two purposes. On outbound calls it is the caller
@@ -574,7 +574,7 @@ figcaption b{ color:var(--ink); font-weight:700; }
       </tr>
       <tr>
         <td><code>Client ID</code><br /><code>Client Secret</code></td>
-        <td><b>Issued through the credential portal</b> using the access code supplied with this guide. See below.</td>
+        <td><b>Sent to you as a sealed file</b> by your Exotel representative, with a separate passphrase. See section 5.2.</td>
       </tr>
       <tr>
         <td><code>App ID</code><br /><code>App Secret</code></td>
@@ -587,42 +587,46 @@ figcaption b{ color:var(--ink); font-weight:700; }
     </tbody>
   </table>
 
-  <h4>5.2 Issuing your Client ID and Client Secret</h4>
+  <h4>5.2 Opening your sealed credential file</h4>
 
   <p>
-    These are issued to you through a secure portal rather than being available
-    in the dashboard. The process takes about a minute and requires three
-    values, all of which you already have.
+    Your Client ID and Client Secret are generated for you and delivered as a
+    sealed file rather than being available in the dashboard. You receive two
+    things, sent through different channels:
+  </p>
+
+  <ul>
+    <li>an HTML file named after your Account SID, and</li>
+    <li>a passphrase, in the form <code>XXXX-XXXX-XXXX-XXXX-XXXX</code>.</li>
+  </ul>
+
+  <p>
+    The file contains only your own credentials, encrypted. It holds nothing
+    belonging to any other account, and no means of generating anything.
   </p>
 
   <ol class="steps">
     <li>
-      Open the credential portal at the address supplied with this guide, using
-      the <strong>access code</strong> provided alongside it. The code is valid
-      for a single use.
+      Save the file somewhere you can find it, then open it. Double clicking is
+      enough; it opens in Chrome, Edge, Firefox or Safari.
     </li>
     <li>
-      Enter your <strong>Account SID</strong>, the identifier for your Exotel
-      account.
+      Enter the <strong>passphrase</strong> you were sent separately, and select
+      <strong>Unseal</strong>.
     </li>
     <li>
-      Enter the <strong>administrator email address</strong> registered on that
-      Exotel account. The portal verifies this against the account, so it must
-      match.
-    </li>
-    <li>
-      The Client ID and Client Secret are displayed. Copy both immediately into
-      your password manager or environment file.
+      Your <strong>Client ID</strong> and <strong>Client Secret</strong> are
+      shown, each with a copy button. Copy both into your password manager or
+      environment file straight away.
     </li>
   </ol>
 
-  <div class="note alarm">
-    <div class="note-title">The credentials are displayed once</div>
+  <div class="note good">
+    <div class="note-title">It works offline, and nothing is transmitted</div>
     <p>
-      The portal shows the pair a single time and does not retain the secret.
-      The access code cannot be reused, and each Account SID is served once.
-      Copy both values before closing the window. If they are subsequently lost,
-      contact your Exotel representative rather than returning to the portal.
+      The file decrypts entirely in your browser. It makes no network request,
+      so it can be opened on a machine with no internet connection, and your
+      credentials are never sent anywhere during the process.
     </p>
   </div>
 
@@ -634,15 +638,65 @@ figcaption b{ color:var(--ink); font-weight:700; }
     credentials instead.
   </p>
 
-  <div class="note good">
-    <div class="note-title">Obtain these before you begin</div>
+  <div class="note alarm">
+    <div class="note-title">Credentials are generated once per account</div>
     <p>
-      The Client ID and Client Secret are the only prerequisite that cannot be
-      satisfied from your own code. Requesting them first means the rest of
-      Parts I and II, along with reading the SDK and building your interface,
-      can proceed in parallel. If your account also needs enabling for
-      IP&ndash;PSTN WebRTC, as described in section 4.1, raise both with your
-      Exotel representative at the same time.
+      A sealed file is produced a single time for each Exotel account. Keep both
+      the file and the passphrase somewhere durable: together they are the only
+      copy, and the passphrase is not recorded anywhere after it is sent to you.
+    </p>
+    <p>
+      Reopening the file with the passphrase always shows the same pair, so
+      there is no need to keep it secret from yourself. What cannot be done is
+      generating a second, different pair without a deliberate reissue.
+    </p>
+  </div>
+
+  <h4>5.3 If the file will not open, or you need a reissue</h4>
+
+  <p>
+    Contact Exotel if the passphrase is not accepted, if either the file or the
+    passphrase has been lost, or if you need credentials generated a second time
+    because the existing pair has been exposed or rotated. A reissue is a
+    deliberate step taken at Exotel's end, so it needs a request rather than a
+    retry. Email <code>hello@exotel.in</code> using the template below.
+  </p>
+
+  <div class="code-label">Email template &middot; to hello@exotel.in</div>
+  <div class="code"><span class="p">To:</span>      <span class="u">hello@exotel.in</span>
+<span class="p">Subject:</span> WebRTC credentials <span class="k">|</span> Account SID <span class="s">&lt;your account sid&gt;</span>
+
+Hello Exotel team,
+
+We are integrating the Exotel IP-PSTN WebRTC WebSDK into our application.
+
+<span class="k">Please could you help with the following:</span>
+<span class="k">  [ ] The sealed credential file will not open with the passphrase we were sent</span>
+<span class="k">  [ ] We no longer have the file or the passphrase</span>
+<span class="k">  [ ] We need the Client ID and Client Secret reissued</span>
+<span class="k">  [ ] Please confirm this account is enabled for IP-PSTN WebRTC</span>
+
+  Account SID      : <span class="s">&lt;your account sid&gt;</span>
+  Registered email : <span class="s">&lt;the administrator email on the Exotel account&gt;</span>
+  ExoPhone         : <span class="s">&lt;your virtual number&gt;</span>
+  Reason           : <span class="s">&lt;one line, for example credentials rotated after staff change&gt;</span>
+
+Thank you,
+<span class="s">&lt;your name, company&gt;</span></div>
+
+  <p>
+    Put the Account SID in the subject line as well as the body. Nothing can be
+    looked up without it, and including it usually means the first reply already
+    contains what you asked for rather than a request for more detail.
+  </p>
+
+  <div class="note">
+    <div class="note-title">Raise account enablement at the same time</div>
+    <p>
+      If your account also needs enabling for IP&ndash;PSTN WebRTC, as described
+      in section 4.1, use the same message. Both are handled at Exotel's end, so
+      one exchange can resolve them together and the rest of Parts I and II can
+      proceed while you wait.
     </p>
   </div>
 
@@ -1023,7 +1077,7 @@ domain:    <span class="s">"voip.in1.exotel.com:443"</span>
 security:  <span class="s">"wss"</span></div>
 
   <div class="note alarm">
-    <div class="note-title">Initialize returns undefined rather than throwing</div>
+    <div class="note-title">Initialize returns undefined instead of throwing</div>
     <p>
       If any of the three requests fails, the SDK logs to the browser console
       and returns <code>undefined</code>. It does not throw, so a
@@ -1489,7 +1543,7 @@ Contact: &lt;sip:…;transport=wss&gt;;expires=300
   </p>
 
   <ul class="checklist">
-    <li><span class="box"></span><span><b>Client ID and Secret obtained.</b> Through the credential portal, section 5.2</span></li>
+    <li><span class="box"></span><span><b>Client ID and Secret obtained.</b> Sealed file opened with its passphrase, section 5.2</span></li>
     <li><span class="box"></span><span><b>Account is Full, active, KYC complete.</b> <code>GET /v1/Accounts/&lt;sid&gt;.json</code></span></li>
     <li><span class="box"></span><span><b>Account has balance.</b> Prepaid accounts fail at call time only</span></li>
     <li><span class="box"></span><span><b>Customer token mints.</b> <code>POST /token</code> with <code>Entity: customer</code></span></li>

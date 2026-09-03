@@ -311,6 +311,103 @@ document.addEventListener("click", async (e) => {
 `;
 }
 
+// ---- one page credential PDF ----------------------------------------------
+// The simplest thing the customer can receive: a PDF that holds their pair and
+// asks nothing of them. It carries no endpoint and performs no action, because
+// a PDF cannot perform one. Whoever holds the file holds the credentials, so
+// send it the way you would send any other secret.
+function buildCredentialPdfHtml(accountSid, clientId, clientSecret) {
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<title>Exotel WebRTC credentials &middot; ${esc(accountSid)}</title>
+<style>
+@page{ size:A4; margin:0; }
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:"Spectral",Georgia,serif; color:#14243d;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+.band{ background:#1e3a5f; color:#fff; padding:16mm 18mm 10mm; }
+.band .k{ font-family:"Source Sans 3",sans-serif; font-size:8pt; font-weight:700;
+          letter-spacing:.22em; text-transform:uppercase; color:#7fd6b5; }
+.band h1{ margin:5mm 0 0; font-size:24pt; font-weight:700; letter-spacing:-.01em; }
+.band .sid{ margin:3mm 0 0; font-family:"IBM Plex Mono",monospace; font-size:10pt; color:rgba(255,255,255,.72); }
+.body{ padding:12mm 18mm 0; }
+.lead{ font-size:10.5pt; color:#3d4f68; margin:0 0 8mm; max-width:150mm; }
+.cred{ border:1px solid #ccd3dd; border-radius:3px; background:#f7f9fb; padding:6mm 7mm; margin-bottom:5mm; }
+.cred .l{ font-family:"Source Sans 3",sans-serif; font-size:7.5pt; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase; color:#6b7c93; margin-bottom:2.5mm; }
+.cred .v{ font-family:"IBM Plex Mono",monospace; font-size:12pt; font-weight:500;
+          color:#14243d; word-break:break-all; line-height:1.4; }
+.envblock{
+  background:#0f1b2d; color:#dce6f2; font-family:"IBM Plex Mono",monospace;
+  font-size:8.5pt; line-height:1.7; padding:5mm 6mm; border-radius:3px; margin:0 0 8mm;
+  white-space:pre-wrap; word-break:break-all;
+}
+.envblock .k{ color:#7fd6b5; }
+.note{ border-left:3px solid #a83338; background:#fbedee; padding:4mm 5mm; margin:0 0 5mm; font-size:9.5pt; }
+.note .t{ font-family:"Source Sans 3",sans-serif; font-size:7.5pt; font-weight:700;
+          letter-spacing:.14em; text-transform:uppercase; color:#a83338; margin-bottom:1.5mm; }
+.note p{ margin:0; color:#3d4f68; }
+.next{ font-size:9.5pt; color:#3d4f68; margin:0 0 4mm; }
+.foot{ position:fixed; bottom:0; left:0; right:0; padding:8mm 18mm;
+       border-top:1px solid #dbe2ea; font-family:"Source Sans 3",sans-serif;
+       font-size:8pt; color:#6b7c93; display:flex; justify-content:space-between; }
+</style></head>
+<body>
+  <div class="band">
+    <div class="k">Exotel &middot; IP&ndash;PSTN WebRTC</div>
+    <h1>Your WebRTC credentials</h1>
+    <div class="sid">Account ${esc(accountSid)}</div>
+  </div>
+
+  <div class="body">
+    <p class="lead">
+      These identify your organisation to Exotel when your application registers.
+      Copy them into your environment file. Nothing needs to be requested or
+      generated: they are already active.
+    </p>
+
+    <div class="cred">
+      <div class="l">Client ID</div>
+      <div class="v">${esc(clientId)}</div>
+    </div>
+    <div class="cred">
+      <div class="l">Client Secret</div>
+      <div class="v">${esc(clientSecret)}</div>
+    </div>
+
+    <div class="envblock"><span class="k">EXOTEL_CLIENT_ID</span>=${esc(clientId)}
+<span class="k">EXOTEL_CLIENT_SECRET</span>=${esc(clientSecret)}</div>
+
+    <p class="next">
+      Section 7 of your integration guide uses these to mint the customer token
+      that registers your application. Every operation after that uses the
+      application credentials returned in section 8.
+    </p>
+
+    <div class="note">
+      <div class="t">Treat this document as a password</div>
+      <p>
+        Anyone holding this pair can place calls billed to your Exotel account.
+        Store it in a password manager and delete the copy that reached you by
+        email. Credentials are generated once per account; for a reissue, or if
+        anything is not working, email hello@exotel.in quoting your Account SID.
+      </p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Exotel WebRTC credentials</span>
+    <span>${esc(accountSid)}</span>
+  </div>
+</body></html>`;
+}
+
 // ---- run -------------------------------------------------------------------
 (async () => {
   try {
@@ -355,8 +452,22 @@ document.addEventListener("click", async (e) => {
     }), pass);
 
     fs.mkdirSync(OUT_DIR, { recursive: true });
-    const file = path.join(OUT_DIR, `${sid}-exotel-credentials.html`);
-    fs.writeFileSync(file, buildPage(sealed, sid));
+    const format = String(args.format || "pdf").toLowerCase();
+    const produced = [];
+
+    if (format === "pdf" || format === "both") {
+      const { htmlToPdf } = require("./lib/html-to-pdf");
+      const pdfPath = path.join(OUT_DIR, `${sid}-exotel-credentials.pdf`);
+      await htmlToPdf(buildCredentialPdfHtml(sid, creds.clientId, creds.clientSecret), pdfPath);
+      produced.push({ kind: "PDF, open and read", path: pdfPath, needsPass: false });
+    }
+
+    let file = null;
+    if (format === "html" || format === "both") {
+      file = path.join(OUT_DIR, `${sid}-exotel-credentials.html`);
+      fs.writeFileSync(file, buildPage(sealed, sid));
+      produced.push({ kind: "sealed HTML, needs the passphrase", path: file, needsPass: true });
+    }
 
     // Record the issue. The secret is never written here, only the client id,
     // so the ledger says who was served without holding anything sensitive.
@@ -368,14 +479,22 @@ document.addEventListener("click", async (e) => {
     };
     ledgerWrite(ledger);
 
-    console.log(`\n  Sealed credential file written`);
-    console.log(`  ------------------------------`);
-    console.log(`  Account   : ${sid}`);
-    console.log(`  Source    : ${creds.source === "provisioned" ? "provisioning call" : "values you supplied"}`);
-    console.log(`  File      : ${file}`);
-    console.log(`\n  PASSPHRASE: ${pass}`);
-    console.log(`\n  Send the file and the passphrase by different channels. The passphrase`);
-    console.log(`  is not stored anywhere, so this is the only copy.\n`);
+    console.log(`\n  Credentials issued for ${sid}`);
+    console.log(`  ${"-".repeat(24 + sid.length)}`);
+    console.log(`  Source : ${creds.source === "provisioned" ? "provisioning call" : "values you supplied"}`);
+    for (const p of produced) console.log(`  ${p.kind}\n    ${p.path}`);
+
+    if (produced.some((p) => p.needsPass)) {
+      console.log(`\n  PASSPHRASE: ${pass}`);
+      console.log(`  Send the sealed file and the passphrase by different channels.`);
+      console.log(`  The passphrase is not stored anywhere, so this is the only copy.`);
+    }
+    if (format === "pdf") {
+      console.log(`\n  The PDF holds the credentials in plain sight, so send it the way you`);
+      console.log(`  would send any other secret. Use --format html for the sealed version,`);
+      console.log(`  which needs a passphrase, or --format both for one of each.`);
+    }
+    console.log("");
   } catch (err) {
     console.error("\n  Failed: " + err.message + "\n");
     process.exitCode = 1;

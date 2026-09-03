@@ -10,7 +10,8 @@
     "provision": "node provision.js",
     "postinstall": "node build-sdk.js",
     "codes": "node scripts/issue-codes.js",
-    "cred-package": "node scripts/make-cred-package.js"
+    "cred-package": "node scripts/make-cred-package.js",
+    "cred-pdf": "node scripts/make-cred-package.js --format pdf"
   },
   "license": "Apache-2.0",
   "dependencies": {

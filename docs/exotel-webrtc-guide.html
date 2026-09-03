@@ -590,45 +590,15 @@ figcaption b{ color:var(--ink); font-weight:700; }
   <h4>5.2 Opening your sealed credential file</h4>
 
   <p>
-    Your Client ID and Client Secret are generated for you and delivered as a
-    sealed file rather than being available in the dashboard. You receive two
-    things, sent through different channels:
-  </p>
-
-  <ul>
-    <li>an HTML file named after your Account SID, and</li>
-    <li>a passphrase, in the form <code>XXXX-XXXX-XXXX-XXXX-XXXX</code>.</li>
-  </ul>
-
-  <p>
-    The file contains only your own credentials, encrypted. It holds nothing
-    belonging to any other account, and no means of generating anything.
+    Your Client ID and Client Secret are issued by Exotel and sent to you as a
+    sealed file, with a passphrase sent separately.
   </p>
 
   <ol class="steps">
-    <li>
-      Save the file somewhere you can find it, then open it. Double clicking is
-      enough; it opens in Chrome, Edge, Firefox or Safari.
-    </li>
-    <li>
-      Enter the <strong>passphrase</strong> you were sent separately, and select
-      <strong>Unseal</strong>.
-    </li>
-    <li>
-      Your <strong>Client ID</strong> and <strong>Client Secret</strong> are
-      shown, each with a copy button. Copy both into your password manager or
-      environment file straight away.
-    </li>
+    <li>Open the file. Double clicking is enough; it opens in your browser.</li>
+    <li>Enter the passphrase and select <strong>Unseal</strong>.</li>
+    <li>Copy the Client ID and Client Secret into your environment file.</li>
   </ol>
-
-  <div class="note good">
-    <div class="note-title">It works offline, and nothing is transmitted</div>
-    <p>
-      The file decrypts entirely in your browser. It makes no network request,
-      so it can be opened on a machine with no internet connection, and your
-      credentials are never sent anywhere during the process.
-    </p>
-  </div>
 
   <p>
     Store them as <code>EXOTEL_CLIENT_ID</code> and
@@ -642,24 +612,17 @@ figcaption b{ color:var(--ink); font-weight:700; }
     <div class="note-title">Credentials are generated once per account</div>
     <p>
       A sealed file is produced a single time for each Exotel account. Keep both
-      the file and the passphrase somewhere durable: together they are the only
-      copy, and the passphrase is not recorded anywhere after it is sent to you.
-    </p>
-    <p>
-      Reopening the file with the passphrase always shows the same pair, so
-      there is no need to keep it secret from yourself. What cannot be done is
-      generating a second, different pair without a deliberate reissue.
+      the file and the passphrase: together they are the only copy.
     </p>
   </div>
 
-  <h4>5.3 If the file will not open, or you need a reissue</h4>
+  <h4>5.3 Reissues, and anything that is not working</h4>
 
   <p>
-    Contact Exotel if the passphrase is not accepted, if either the file or the
-    passphrase has been lost, or if you need credentials generated a second time
-    because the existing pair has been exposed or rotated. A reissue is a
-    deliberate step taken at Exotel's end, so it needs a request rather than a
-    retry. Email <code>hello@exotel.in</code> using the template below.
+    Email <code>hello@exotel.in</code> using the template below. Use it for a
+    reissue, and equally if the passphrase is not accepted, the file has been
+    lost, or anything else here is not behaving as described. Generation happens
+    at Exotel's end, so these need a request rather than a retry.
   </p>
 
   <div class="code-label">Email template &middot; to hello@exotel.in</div>
@@ -671,34 +634,22 @@ Hello Exotel team,
 We are integrating the Exotel IP-PSTN WebRTC WebSDK into our application.
 
 <span class="k">Please could you help with the following:</span>
-<span class="k">  [ ] The sealed credential file will not open with the passphrase we were sent</span>
+<span class="k">  [ ] Reissue our Client ID and Client Secret</span>
+<span class="k">  [ ] The passphrase does not open the sealed file</span>
 <span class="k">  [ ] We no longer have the file or the passphrase</span>
-<span class="k">  [ ] We need the Client ID and Client Secret reissued</span>
-<span class="k">  [ ] Please confirm this account is enabled for IP-PSTN WebRTC</span>
+<span class="k">  [ ] Confirm this account is enabled for IP-PSTN WebRTC</span>
 
   Account SID      : <span class="s">&lt;your account sid&gt;</span>
   Registered email : <span class="s">&lt;the administrator email on the Exotel account&gt;</span>
   ExoPhone         : <span class="s">&lt;your virtual number&gt;</span>
-  Reason           : <span class="s">&lt;one line, for example credentials rotated after staff change&gt;</span>
 
 Thank you,
 <span class="s">&lt;your name, company&gt;</span></div>
 
   <p>
     Put the Account SID in the subject line as well as the body. Nothing can be
-    looked up without it, and including it usually means the first reply already
-    contains what you asked for rather than a request for more detail.
+    looked up without it.
   </p>
-
-  <div class="note">
-    <div class="note-title">Raise account enablement at the same time</div>
-    <p>
-      If your account also needs enabling for IP&ndash;PSTN WebRTC, as described
-      in section 4.1, use the same message. Both are handled at Exotel's end, so
-      one exchange can resolve them together and the rest of Parts I and II can
-      proceed while you wait.
-    </p>
-  </div>
 
   <div class="note alarm">
     <div class="note-title">Confirm which value is the key and which is the token</div>
